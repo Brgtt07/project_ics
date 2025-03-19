@@ -1,3 +1,6 @@
+#Frontend
+streamlit
+
 #API
 fastapi
 uvicorn
