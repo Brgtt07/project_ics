@@ -1,3 +1,4 @@
-raw_data/
+Dataset_kaggle/
+__pycache__/
 __pycache__/
 .env
