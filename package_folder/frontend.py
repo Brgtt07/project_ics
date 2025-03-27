@@ -8,9 +8,10 @@ st.title("🌍 Find Your Ideal Country to Live!")
 
 # User inputs (at the moment just to test)
 climate = st.selectbox("Preferred Climate:", ["Hot", "Cold", "Moderate"])
-cost_of_living = st.slider("Cost of Living (1 - Low, 5 - High)", 1, 5, 3)
-safety = st.slider("Safety Level (1 - Low, 5 - High)", 1, 5, 3)
-internet_quality = st.slider("Internet Quality (1 - Poor, 5 - Excellent)", 1, 5, 3)
+cost_of_living = st.slider("💰 Cost of Living (1 - Low, 100 - High)", 1, 100, 50, 
+                            help="Select your preferred cost of living.")
+safety = st.slider("Safety Level (1 - Low, 100 - High)", 1, 100, 50)
+internet_quality = st.slider("Internet Quality (1 - Low, 100 - High)", 1, 100, 50)
 
 # Submit button to trigger API call
 if st.button("Find My Ideal Country"):
@@ -36,9 +37,9 @@ if st.button("Find My Ideal Country"):
 
 # Test API button
 if st.button("Test API"):
-    test_endpoint = "https://project-ics-210911899890.europe-west1.run.app/predict"
+    test_endpoint = "http://localhost:8000/predict"
     # Prepare data for API call
-    greeting = "hello"  # or any other value you want to test
+    greeting = "not banana"  # or any other value you want to test
     # Make API call
     try:
         response = requests.get(f"{test_endpoint}?greeting={greeting}")
