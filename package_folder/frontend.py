@@ -33,3 +33,20 @@ if st.button("Find My Ideal Country"):
     except Exception as e:
         st.error(f"Error connecting to API: {e}")
         st.info("Note: Make sure the API server is running on https://project-ics-210911899890.europe-west1.run.app")
+
+# Test API button
+if st.button("Test API"):
+    test_endpoint = "https://project-ics-210911899890.europe-west1.run.app/predict"
+    # Prepare data for API call
+    greeting = "hello"  # or any other value you want to test
+    # Make API call
+    try:
+        response = requests.get(f"{test_endpoint}?greeting={greeting}")
+        response_data = response.json()
+        
+        # Display response
+        st.success("Here are your results!")
+        st.json(response_data)
+    except Exception as e:
+        st.error(f"Error connecting to API: {e}")
+        st.info("Note: Make sure the API server is running on https://project-ics-210911899890.europe-west1.run.app")
