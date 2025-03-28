@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
 
 app = FastAPI()
 
@@ -7,6 +7,17 @@ def root():
     return {'hello': 'world'}
 
 @app.get('/predict')
-def predict():
+def predict(
+    greeting: str = Query(..., description="A greeting message")
+):
+    if greeting == "hello":
+        return {"response": "banana"}
+    else:
+        return {"response": f"You said: {greeting}"}
 
-    return {'hello': 'world'}
+
+@app.get('/top_countries_weighted_sum')
+def top_countries_weighted_sum(
+    #define the expected inputs
+):
+    return {"response": "banana"}
