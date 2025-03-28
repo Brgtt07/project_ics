@@ -4,29 +4,43 @@ import requests
 # Cloud Run API URL
 API_URL = 'https://project-ics-210911899890.europe-west1.run.app/predict'
 
+st.set_page_config(page_title="Ideal Country Finder", layout="centered")
 st.title("🌍 Find Your Ideal Country to Live!")
+st.markdown("Customize your preferences and discover which countries suit you best!")
 
-# User inputs (at the moment just to test)
-climate = st.selectbox("Preferred Climate:", ["Hot", "Cold", "Moderate"])
-cost_of_living = st.slider("Cost of Living (1 - Low, 5 - High)", 1, 5, 3)
-safety = st.slider("Safety Level (1 - Low, 5 - High)", 1, 5, 3)
-internet_quality = st.slider("Internet Quality (1 - Poor, 5 - Excellent)", 1, 5, 3)
+# --- Step 1: Preference order ---
+st.header("1️⃣ Prioritize your preferences")
+preference_labels = ["Climate", "Cost of Living", "Safety", "Internet Quality"]
 
-# Submit button to trigger API call
-if st.button("Find My Ideal Country"):
-    # Prepare data for API call
+cols = st.columns(4)
+selections = []
+for i, col in enumerate(cols):
+    label = f"{i+1}{'st' if i == 0 else 'nd' if i == 1 else 'rd' if i == 2 else 'th'} Priority"
+    options = [p for p in preference_labels if p not in selections]
+    selected = col.selectbox(label, options, key=f"priority_{i}")
+    selections.append(selected)
+
+preferences_order = selections
+
+# --- Step 2: Scoring ---
+st.header("2️⃣ Rate each preference from 1 to 10")
+scores = {}
+for pref in preferences_order:
+    key = pref.lower().replace(" ", "_")
+    scores[key] = st.slider(f"{pref} Score", 1, 10, 5)
+
+# --- Submission ---
+if st.button("🎯 Find My Ideal Country"):
     data = {
-        "climate": climate,
-        "cost_of_living": cost_of_living,
-        "safety": safety,
-        "internet_quality": internet_quality
+        "preferences_order": preferences_order,
+        **scores
     }
-    
+
     # Make API call
     try:
-        response = requests.post(API_URL, json=data)
+        response = requests.get(API_URL, params=data)
         response_data = response.json()
-        
+
         # Display response
         st.success("Here are your results!")
         st.json(response_data)
