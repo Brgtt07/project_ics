@@ -71,13 +71,13 @@ if st.button("🎯 Find My Ideal Country"):
     else:
         st.error("No countries found. Please try again.")
 
-if st.button("🧪 Test User Input"):
+#if st.button("🧪 Test User Input"):
         # Make API call to the test endpoint
-        response = requests.post("http://localhost:8000/test_user_input", json=user_inputs)
+        #response = requests.post("http://localhost:8000/test_user_input", json=user_inputs)
 
-        if response.status_code == 200:
-            test_results = response.json()
-            st.subheader("🧪 Test User Input Response:")
-            st.write(test_results)
-        else:
-            st.error("Error testing user input. Please try again.")
+        #if response.status_code == 200:
+        #    test_results = response.json()
+        #    st.subheader("🧪 Test User Input Response:")
+        #    st.write(test_results)
+        #else:
+        #    st.error("Error testing user input. Please try again.")
