@@ -1,5 +1,7 @@
 import numpy as np
 from typing import Dict, Any
+import pickle
+
 
 def encode_preference(preference: any, preference_type: str) -> float:
     """
@@ -109,8 +111,11 @@ def transform_user_inputs(user_input_dict: Dict[str, Any]) -> Dict[str, float]:
          "internet_speed_preference": normalized_inputs["internet_speed_preference"]
     }
      
-    # Apply the transformation
-    transformed_preferences = transform_pipeline.transform(preferences_to_transform)
+    # Import the pre-fitted pipeline and apply the transformation
+    with open('../models/scaling_pipeline.pkl', 'rb') as f:
+        pipe = pickle.load(f)
+    
+    transformed_preferences = pipe.transform(preferences_to_transform)
     
     # Update normalized inputs with transformed values
     for key, value in transformed_preferences.items():
