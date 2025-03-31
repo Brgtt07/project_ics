@@ -9,42 +9,56 @@ api_local = 'http://localhost:8000//recommend-countries'
 st.title("🌍 Find Your Ideal Country to Live!")
 st.write("")
 
+# Initialize the user inputs dictionary
+user_inputs = {}
 
-# User selects the importance of each feature (1-10 scale)
-st.subheader("1️⃣ Rate the Importance of Each Category (1 = Not Important, 10 = Very Important)")
-weights = {
-    "Safety": st.slider("Safety", 1, 10, 5),
-    "Cost of Living": st.slider("Cost of Living", 1, 10, 5),
-    "Health Care Index": st.slider("Health Care", 1, 10, 5),
-    "Internet Speed": st.slider("Internet Speed", 1, 10, 5),
-    "Temperature": st.slider("Temperature", 1, 10, 5)
-}
-st.write("")
-
-# User selects qualitative choices for each feature
-st.subheader("2️⃣ Select your Preferred Country Temperature Level")
-
+# Climate/Temperature
+st.subheader("🌡️ Temperature Preference")
 # Defining the qualitative options
 temperature_options = ["Cold", "Moderate", "Hot"]
-
-# Creating qualitative slider
-selected_temperature = st.select_slider("Temperature Range", options=temperature_options)
-
-# Keeping the choice in a dict format
-choices = {"Temperature Range": selected_temperature}
-st.write(f"Selected Temperature: {selected_temperature}")
+user_inputs["climate_preference"] = st.select_slider("Temperature Range", options=temperature_options).lower()
+user_inputs["climate_importance"] = st.slider("How important is climate to you?", 1, 10, 5)
 st.write("")
 
+# Cost of Living
+st.subheader("💰 Cost of Living")
+#commented options but left them in case we want to use them in the future
+#cost_options = ["Low", "Moderate", "High"]
+#user_inputs["cost_of_living_preference"] = st.select_slider("Cost of Living Range", options=cost_options).lower()
+user_inputs["cost_of_living_importance"] = st.slider("How important is cost of living to you?", 1, 10, 5)
+user_inputs["max_monthly_budget"] = st.number_input("Optional: Maximum monthly budget (USD)", min_value=0, value=0, step=100)
+if user_inputs["max_monthly_budget"] == 0:
+    user_inputs["max_monthly_budget"] = None
+st.write("")
+
+# Healthcare
+st.subheader("🏥 Healthcare")
+#commented options but left them in case we want to use them in the future
+#healthcare_options = ["Fair", "Good", "Excellent"]
+#user_inputs["healthcare_preference"] = st.select_slider("Healthcare Quality", options=healthcare_options).lower()
+user_inputs["healthcare_importance"] = st.slider("How important is healthcare to you?", 1, 10, 5)
+st.write("")
+
+# Safety
+st.subheader("🛡️ Safety")
+#commented options but left them in case we want to use them in the future
+#safety_options = ["Moderate", "Safe", "Very Safe"]
+#user_inputs["safety_preference"] = st.select_slider("Safety Level", options=safety_options).lower()
+user_inputs["safety_importance"] = st.slider("How important is safety to you?", 1, 10, 5)
+st.write("")
+
+# Internet Speed
+st.subheader("🌐 Internet Speed")
+#commented options but left them in case we want to use them in the future
+#internet_options = ["Slow", "Moderate", "Fast"]
+#user_inputs["internet_speed_preference"] = st.select_slider("Internet Speed", options=internet_options).lower()
+user_inputs["internet_speed_importance"] = st.slider("How important is internet speed to you?", 1, 10, 5)
+st.write("")
 
 # Submit button to trigger API call
 if st.button("🎯 Find My Ideal Country"):
-    # Prepare the data to send to the API
-    user_preferences = {
-        "weights": weights,
-        "choices": choices
-    }
     # Make API call
-    response = requests.post(api_local, json=user_preferences)
+    response = requests.get(api_local, json=user_inputs)
 
     if response.status_code == 200:
         results = response.json()

@@ -2,74 +2,6 @@ import numpy as np
 from typing import Dict, Any
 import pickle
 
-
-def encode_preference(preference: any, preference_type: str) -> float:
-    """
-    Maps a user preference to a normalized value based on its type.
-    
-    Args:
-        preference: The qualitative user preference e.g. "hot"
-        preference_type: The type of preference the "preference" arg refers to (e.g., "climate", "cost_of_living", etc.)
-        
-    Returns:
-        An arbitrary float value to encode the qualitative preference into a number.
-    """
-    if preference_type == "climate":
-        if preference == "hot":
-            return 25.0
-        elif preference == "mild":
-            return 18.0
-        elif preference == "cold":
-            return 11.0
-        else:
-            raise ValueError(f"Invalid climate preference: '{preference}'. Expected one of: 'hot', 'mild', 'cold'")
-
-    elif preference_type == "cost_of_living":
-        if preference == "low":
-            return 400.0
-        elif preference == "moderate":
-            return 800.0
-        elif preference == "high":
-            return 2500.0
-        else:
-            raise ValueError(f"Invalid cost of living preference: '{preference}'. Expected one of: 'low', 'moderate', 'high'")
-
-    elif preference_type == "healthcare":
-        if preference == "excellent":
-            return 75.0
-        elif preference == "good":
-            return 65.0
-        elif preference == "fair":
-            return 50.0
-        else:
-            raise ValueError(f"Invalid healthcare preference: '{preference}'. Expected one of: 'excellent', 'good', 'fair'")
-
-    elif preference_type == "safety":
-        if preference == "very_safe":
-            return 75.0
-        elif preference == "safe":
-            return 65.0
-        elif preference == "moderate":
-            return 50.0
-        else:
-            raise ValueError(f"Invalid safety preference: '{preference}'. Expected one of: 'very_safe', 'safe', 'moderate'")
-
-    elif preference_type == "internet_speed":
-        if preference == "fast":
-            return 200.0
-        elif preference == "moderate":
-            return 100.0
-        elif preference == "slow":
-            return 50.0
-        else:
-            raise ValueError(f"Invalid internet speed preference: '{preference}'. Expected one of: 'fast', 'moderate', 'slow'")
-    else:
-        raise ValueError(f"Invalid preference type: '{preference_type}'. Did you mean 'climate', 'cost_of_living', 'healthcare', 'safety', or 'internet_speed'?")
-    return None  # Fallback for any unknown preference types
-
-
-
-
 def transform_user_inputs(user_input_dict: Dict[str, Any]) -> Dict[str, float]:
     """
     Transform user input dictionary recieved from the frontend into normalized values suitable for model / simple algorithm prediction.
@@ -142,3 +74,73 @@ def transform_user_inputs(user_input_dict: Dict[str, Any]) -> Dict[str, float]:
     #     # normalized_inputs["max_monthly_budget"] = 0.5  # Mid-range scaled value
     
     return normalized_inputs   
+
+
+
+def encode_preference(preference: any, preference_type: str) -> float:
+    """
+    Maps a user preference to a normalized value based on its type.
+    
+    Args:
+        preference: The qualitative user preference e.g. "hot"
+        preference_type: The type of preference the "preference" arg refers to (e.g., "climate", "cost_of_living", etc.)
+        
+    Returns:
+        An arbitrary float value to encode the qualitative preference into a number.
+    """
+    if preference_type == "climate":
+        if preference == "hot":
+            return 25.0
+        elif preference == "mild":
+            return 18.0
+        elif preference == "cold":
+            return 11.0
+        else:
+            raise ValueError(f"Invalid climate preference: '{preference}'. Expected one of: 'hot', 'mild', 'cold'")
+
+    elif preference_type == "cost_of_living":
+        if preference == "low":
+            return 400.0
+        elif preference == "moderate":
+            return 800.0
+        elif preference == "high":
+            return 2500.0
+        else:
+            raise ValueError(f"Invalid cost of living preference: '{preference}'. Expected one of: 'low', 'moderate', 'high'")
+
+    elif preference_type == "healthcare":
+        if preference == "excellent":
+            return 75.0
+        elif preference == "good":
+            return 65.0
+        elif preference == "fair":
+            return 50.0
+        else:
+            raise ValueError(f"Invalid healthcare preference: '{preference}'. Expected one of: 'excellent', 'good', 'fair'")
+
+    elif preference_type == "safety":
+        if preference == "very_safe":
+            return 75.0
+        elif preference == "safe":
+            return 65.0
+        elif preference == "moderate":
+            return 50.0
+        else:
+            raise ValueError(f"Invalid safety preference: '{preference}'. Expected one of: 'very_safe', 'safe', 'moderate'")
+
+    elif preference_type == "internet_speed":
+        if preference == "fast":
+            return 200.0
+        elif preference == "moderate":
+            return 100.0
+        elif preference == "slow":
+            return 50.0
+        else:
+            raise ValueError(f"Invalid internet speed preference: '{preference}'. Expected one of: 'fast', 'moderate', 'slow'")
+    else:
+        raise ValueError(f"Invalid preference type: '{preference_type}'. Did you mean 'climate', 'cost_of_living', 'healthcare', 'safety', or 'internet_speed'?")
+    return None  # Fallback for any unknown preference types
+
+
+
+
