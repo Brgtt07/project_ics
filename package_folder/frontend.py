@@ -9,6 +9,7 @@ api_local = 'http://localhost:8000/predict'
 st.title("🌍 Find Your Ideal Country to Live!")
 st.write("")
 
+
 # User selects the importance of each feature (1-10 scale)
 st.subheader("1️⃣ Rate the Importance of Each Category (1 = Not Important, 10 = Very Important)")
 weights = {
@@ -34,6 +35,7 @@ choices = {"Temperature Range": selected_temperature}
 st.write(f"Selected Temperature: {selected_temperature}")
 st.write("")
 
+
 # Submit button to trigger API call
 if st.button("🎯 Find My Ideal Country"):
     # Prepare the data to send to the API
@@ -54,3 +56,4 @@ if st.button("🎯 Find My Ideal Country"):
             st.write("API response error:", results)
     else:
         st.error("No countries found. Please try again.")
+
