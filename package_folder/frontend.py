@@ -8,7 +8,7 @@ st.title("🌍 Find Your Ideal Country to Live!")
 
 # User inputs (at the moment just to test)
 climate = st.selectbox("Preferred Climate:", ["Hot", "Cold", "Moderate"])
-cost_of_living = st.slider("💰 Cost of Living (1 - Low, 100 - High)", 1, 100, 50, 
+cost_of_living = st.slider("💰 Cost of Living (1 - Low, 100 - High)", 1, 100, 50,
                             help="Select your preferred cost of living.")
 safety = st.slider("Safety Level (1 - Low, 100 - High)", 1, 100, 50)
 internet_quality = st.slider("Internet Quality (1 - Low, 100 - High)", 1, 100, 50)
@@ -22,12 +22,12 @@ if st.button("Find My Ideal Country"):
         "safety": safety,
         "internet_quality": internet_quality
     }
-    
+
     # Make API call
     try:
         response = requests.post(API_URL, json=data)
         response_data = response.json()
-        
+
         # Display response
         st.success("Here are your results!")
         st.json(response_data)
@@ -44,7 +44,7 @@ if st.button("Test API"):
     try:
         response = requests.get(f"{test_endpoint}?greeting={greeting}")
         response_data = response.json()
-        
+
         # Display response
         st.success("Here are your results!")
         st.json(response_data)
