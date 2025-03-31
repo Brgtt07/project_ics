@@ -3,51 +3,54 @@ import requests
 
 # Cloud Run API URL
 API_URL = 'https://project-ics-210911899890.europe-west1.run.app/predict'
+# Local API URL for testing
+api_local = 'http://localhost:8000/predict'
 
 st.title("🌍 Find Your Ideal Country to Live!")
+st.write("")
 
-# User inputs (at the moment just to test)
-climate = st.selectbox("Preferred Climate:", ["Hot", "Cold", "Moderate"])
-cost_of_living = st.slider("💰 Cost of Living (1 - Low, 100 - High)", 1, 100, 50, 
-                            help="Select your preferred cost of living.")
-safety = st.slider("Safety Level (1 - Low, 100 - High)", 1, 100, 50)
-internet_quality = st.slider("Internet Quality (1 - Low, 100 - High)", 1, 100, 50)
+# User selects the importance of each feature (1-10 scale)
+st.subheader("1️⃣ Rate the Importance of Each Category (1 = Not Important, 10 = Very Important)")
+weights = {
+    "Safety": st.slider("Safety", 1, 10, 5),
+    "Cost of Living": st.slider("Cost of Living", 1, 10, 5),
+    "Health Care Index": st.slider("Health Care", 1, 10, 5),
+    "Internet Speed": st.slider("Internet Speed", 1, 10, 5),
+    "Temperature": st.slider("Temperature", 1, 10, 5)
+}
+st.write("")
+
+# User selects qualitative choices for each feature
+st.subheader("2️⃣ Select your Preferred Country Temperature Level")
+
+# Defining the qualitative options
+temperature_options = ["Cold", "Moderate", "Hot"]
+
+# Creating qualitative slider
+selected_temperature = st.select_slider("Temperature Range", options=temperature_options)
+
+# Keeping the choice in a dict format
+choices = {"Temperature Range": selected_temperature}
+st.write(f"Selected Temperature: {selected_temperature}")
+st.write("")
 
 # Submit button to trigger API call
-if st.button("Find My Ideal Country"):
-    # Prepare data for API call
-    data = {
-        "climate": climate,
-        "cost_of_living": cost_of_living,
-        "safety": safety,
-        "internet_quality": internet_quality
+if st.button("🎯 Find My Ideal Country"):
+    # Prepare the data to send to the API
+    user_preferences = {
+        "weights": weights,
+        "choices": choices
     }
-    
     # Make API call
-    try:
-        response = requests.post(API_URL, json=data)
-        response_data = response.json()
-        
-        # Display response
-        st.success("Here are your results!")
-        st.json(response_data)
-    except Exception as e:
-        st.error(f"Error connecting to API: {e}")
-        st.info("Note: Make sure the API server is running on https://project-ics-210911899890.europe-west1.run.app")
+    response = requests.post(api_local, json=user_preferences)
 
-# Test API button
-if st.button("Test API"):
-    test_endpoint = "http://localhost:8000/predict"
-    # Prepare data for API call
-    greeting = "not banana"  # or any other value you want to test
-    # Make API call
-    try:
-        response = requests.get(f"{test_endpoint}?greeting={greeting}")
-        response_data = response.json()
-        
-        # Display response
-        st.success("Here are your results!")
-        st.json(response_data)
-    except Exception as e:
-        st.error(f"Error connecting to API: {e}")
-        st.info("Note: Make sure the API server is running on https://project-ics-210911899890.europe-west1.run.app")
+    if response.status_code == 200:
+        results = response.json()
+        st.subheader("🎯 Top Matching Countries:")
+        if isinstance(results, list):
+            for country in results:
+                st.write(f"{country['country']} - Score: {country['score']:.2f}")
+        else:
+            st.write("API response error:", results)
+    else:
+        st.error("No countries found. Please try again.")
