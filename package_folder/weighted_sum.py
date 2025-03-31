@@ -1,6 +1,6 @@
 import pandas as pd
 
-df = pd.read_csv("raw_data/merged_country_level/scaled_merged_data_after_imputation.csv")
+df = pd.read_csv("../raw_data/merged_country_level/scaled_merged_data_after_imputation.csv")
 
 def weighted_sum(data: pd.DataFrame, user_inputs: dict) -> pd.DataFrame:
     """

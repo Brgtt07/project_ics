@@ -12,18 +12,9 @@ def root():
 
 @app.get("/recommend-countries")
 def recommend_countries(
-    cost: float = Query(..., description="Cost preference"),
-    climate: str = Query(..., description="Preferred climate"),
-    healthcare: float = Query(..., description="Healthcare rating"),
-    internet: float = Query(..., description="Internet speed preference")
+    user_inputs: dict = Query(..., description="User input data")
     ):
-    user_inputs = {
-        "cost": cost,
-        "climate": climate,
-        "healthcare": healthcare,
-        "internet": internet
-    }
-
+    
     # Step 1: Convert user inputs to numerical weights
     processed_inputs = transform_user_inputs(user_inputs)
 
@@ -34,6 +25,15 @@ def recommend_countries(
     top_5 = result_df.sort_values(by="country_user_score", ascending=False).head(5)
 
     return top_5.to_dict(orient="records")
+
+
+
+
+
+
+
+
+
 
 
 #test endpoint to use for debugging

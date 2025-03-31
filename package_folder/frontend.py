@@ -58,7 +58,7 @@ st.write("")
 # Submit button to trigger API call
 if st.button("🎯 Find My Ideal Country"):
     # Make API call
-    response = requests.get(api_local, json=user_inputs)
+    response = requests.get(api_local, params=user_inputs)
 
     if response.status_code == 200:
         results = response.json()
