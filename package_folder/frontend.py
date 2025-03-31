@@ -2,9 +2,9 @@ import streamlit as st
 import requests
 
 # Cloud Run API URL
-API_URL = 'https://project-ics-210911899890.europe-west1.run.app/predict'
+API_URL = 'https://project-ics-210911899890.europe-west1.run.app//recommend-countries'
 # Local API URL for testing
-api_local = 'http://localhost:8000/predict'
+api_local = 'http://localhost:8000//recommend-countries'
 
 st.title("🌍 Find Your Ideal Country to Live!")
 st.write("")
