@@ -1,8 +1,8 @@
 import pandas as pd
 
-df = pd.read_csv("../raw_data/merged_country_level/scaled_merged_data.csv")
+df = pd.read_csv("raw_data/merged_country_level/scaled_merged_data_after_imputation.csv")
 
-def top_countries_weighted_sum(data: pd.DataFrame, user_inputs: dict) -> pd.DataFrame:
+def weighted_sum(data: pd.DataFrame, user_inputs: dict) -> pd.DataFrame:
     """
 
     Params:
