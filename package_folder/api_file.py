@@ -21,8 +21,8 @@ def recommend_countries(user_inputs: dict):
     # Load the dataset
     data_path = os.path.join(project_dir, "raw_data", "merged_country_level", "scaled_merged_data_after_imputation.csv")
     data = pd.read_csv(data_path)
-    
+
     # Calculate weighted scores
     result_df = weighted_sum(data, processed_inputs)
-    
+
     return result_df.to_dict(orient="records")
