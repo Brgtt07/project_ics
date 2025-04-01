@@ -6,6 +6,9 @@ fastapi
 uvicorn
 
 #ML
+scikit-learn
+pandas
+numpy
 
 #.env
 python-dotenv
