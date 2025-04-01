@@ -26,9 +26,9 @@ st.subheader("💰 Cost of Living")
     #cost_options = ["Low", "Moderate", "High"]
     #user_inputs["cost_of_living_preference"] = st.select_slider("Cost of Living Range", options=cost_options).lower()
 user_inputs["cost_of_living_importance"] = st.slider("How important is cost of living to you?", 0, 10, 5)
-user_inputs["max_monthly_budget"] = st.number_input("Optional: Maximum monthly budget (USD)", min_value=0, value=0, step=100)
-if user_inputs["max_monthly_budget"] == 0:
-    user_inputs["max_monthly_budget"] = None
+#user_inputs["max_monthly_budget"] = st.number_input("Optional: Maximum monthly budget (USD)", min_value=0, value=0, step=100)
+#if user_inputs["max_monthly_budget"] == 0:
+    #user_inputs["max_monthly_budget"] = None
 st.write("")
 
 # Healthcare
@@ -65,7 +65,7 @@ if st.button("🎯 Find My Ideal Country"):
         st.subheader("🎯 Top Matching Countries:")
         if isinstance(results, list):
             for country in results:
-                st.write(f"{country['country']} - Score: {country['score']:.2f}")
+                st.write(f"{country['country']} - Score: {country['country_score']:.2f}")
         else:
             st.write("API response error:", results)
     else:

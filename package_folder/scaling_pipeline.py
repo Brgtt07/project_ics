@@ -2,6 +2,10 @@ import numpy as np
 from typing import Dict, Any
 import pickle
 import pandas as pd
+import os
+
+# Get the absolute path to the project directory
+project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def transform_user_inputs(user_input_dict: Dict[str, Any]) -> Dict[str, float]:
     """
@@ -34,7 +38,8 @@ def transform_user_inputs(user_input_dict: Dict[str, Any]) -> Dict[str, float]:
 
      
     # Import the pre-fitted pipeline and apply the transformation
-    with open('../models/scaling_pipeline.pkl', 'rb') as f:
+    pipeline_path = os.path.join(project_dir, 'models', 'scaling_pipeline.pkl')
+    with open(pipeline_path, 'rb') as f:
         pipe = pickle.load(f)
 
     preferences_to_transform = pd.DataFrame([{

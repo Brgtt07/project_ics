@@ -1,6 +1,8 @@
 import pandas as pd
+import os
 
-df = pd.read_csv("../raw_data/merged_country_level/scaled_merged_data_after_imputation.csv")
+# Get the absolute path to the project directory
+project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def weighted_sum(data: pd.DataFrame, user_inputs: dict) -> pd.DataFrame:
     """
