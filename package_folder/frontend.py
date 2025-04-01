@@ -2,9 +2,9 @@ import streamlit as st
 import requests
 
 # Cloud Run API URL
-API_URL = 'https://project-ics-210911899890.europe-west1.run.app//recommend-countries'
+API_URL = 'https://project-ics-210911899890.europe-west1.run.app/recommend-countries'
 # Local API URL for testing
-api_local = 'http://localhost:8000//recommend-countries'
+# api_local = 'http://localhost:8000/recommend-countries'
 
 st.title("🌍 Find Your Ideal Country to Live!")
 st.write("")
@@ -63,9 +63,9 @@ if st.button("🎯 Find My Ideal Country"):
         'safety_importance': safety_importance,
         'internet_speed_importance': internet_speed_importance
     }
-    
+
     # Make API call with POST request
-    response = requests.post(api_local, json=data)
+    response = requests.post(API_URL, json=data)
     st.markdown("---")  # Adds a horizontal line for separation
     if response.status_code == 200:
         results = response.json()

@@ -4,7 +4,7 @@ COPY models models
 COPY package_folder package_folder
 COPY requirements.txt requirements.txt
 COPY setup.py setup.py
-COPY raw_data/merged_country_level/scaled_merged_data_after_imputation.csv
+COPY raw_data/merged_country_level/scaled_merged_data_after_imputation.csv raw_data/merged_country_level/scaled_merged_data_after_imputation.csv
 
 RUN pip install --upgrade pip
 # RUN pip install -e . right now this is not needed since we don't have a setup.py file
