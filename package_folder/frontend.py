@@ -66,13 +66,14 @@ if st.button("🎯 Find My Ideal Country"):
     
     # Make API call with POST request
     response = requests.post(api_local, json=data)
-
+    st.markdown("---")  # Adds a horizontal line for separation
     if response.status_code == 200:
         results = response.json()
         st.subheader("🎯 Top Matching Countries:")
         if isinstance(results, list):
-            for country in results:
-                st.write(f"{country['country']} - Score: {country['country_score']:.2f}")
+            for i, country in enumerate(results, 1):
+                # Display country name and score in a single line
+                st.write(f"**#{i} 🏆 {country['country']}** - Match Score: {country['country_score'] * 100:.1f}")
         else:
             st.write("API response error:", results)
     else:
