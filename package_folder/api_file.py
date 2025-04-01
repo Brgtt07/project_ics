@@ -1,39 +1,27 @@
-from fastapi import FastAPI, Query, Body
-from package_folder.scaling_pipeline import transform_user_inputs  # Make sure these are implemented
-from package_folder.weighted_sum import weighted_sum  # Make sure these are implemented
+from fastapi import FastAPI, Body
+from package_folder.scaling_pipeline import transform_user_inputs
+from package_folder.weighted_sum import weighted_sum
+import pandas as pd
+import os
 
+base_path = os.path.dirname(os.path.dirname(__file__))
+csv_path = os.path.join(base_path, "raw_data", "merged_country_level", "scaled_merged_data_after_imputation.csv")
+df = pd.read_csv(csv_path)
 app = FastAPI()
 
-@app.get('/')
+@app.get("/")
 def root():
-    return {'hello': 'world'}
+    return {"hello": "world"}
 
 
-
-@app.get("/recommend-countries")
+@app.post("/recommend-countries")
 def recommend_countries(
-    user_inputs: dict = Query(..., description="User input data")
-    ):
-    
-    # Step 1: Convert user inputs to numerical weights
+    user_inputs: dict = Body(..., description="User input data")
+):
     processed_inputs = transform_user_inputs(user_inputs)
-
-    # Step 2: Score countries based on user preferences
-    result_df = weighted_sum(processed_inputs)
-
-    # Step 3: Return top 5 countries
-    top_5 = result_df.sort_values(by="country_user_score", ascending=False).head(5)
-
+    result_df = weighted_sum(df, processed_inputs)
+    top_5 = result_df.sort_values(by="country_score", ascending=False).head(5)
     return top_5.to_dict(orient="records")
-
-
-
-
-
-
-
-
-
 
 
 #test endpoint to use for debugging

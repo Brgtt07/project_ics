@@ -58,14 +58,14 @@ st.write("")
 # Submit button to trigger API call
 if st.button("🎯 Find My Ideal Country"):
     # Make API call
-    response = requests.get(api_local, params=user_inputs)
+    response = requests.post(api_local, json=user_inputs)
 
     if response.status_code == 200:
         results = response.json()
         st.subheader("🎯 Top Matching Countries:")
         if isinstance(results, list):
             for country in results:
-                st.write(f"{country['country']} - Score: {country['score']:.2f}")
+                st.write(f"{country['country']} - Score: {country['country_score']:.2f}")
         else:
             st.write("API response error:", results)
     else:
