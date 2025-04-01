@@ -83,7 +83,7 @@ def encode_preference(preference: any, preference_type: str) -> float:
     if preference_type == "climate_preference":
         if preference == "hot":
             return 25.0
-        elif preference == "mild":
+        elif preference == "moderate":
             return 18.0
         elif preference == "cold":
             return 11.0
