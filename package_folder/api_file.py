@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Query
+from fastapi import FastAPI
 from package_folder.scaling_pipeline import transform_user_inputs
 from package_folder.weighted_sum import weighted_sum
 import pandas as pd
@@ -13,7 +13,7 @@ app = FastAPI()
 def root():
     return {'hello': 'world'}
 
-@app.get("/recommend-countries")
+@app.post("/recommend-countries")
 def recommend_countries(user_inputs: dict):
     # Process user inputs (encoding and normalization)
     processed_inputs = transform_user_inputs(user_inputs)
