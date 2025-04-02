@@ -24,7 +24,7 @@ def recommend_countries(user_inputs: dict):
 
     #Filter the dataset based on the max_monthly_budget
     if 'max_monthly_budget' in processed_inputs:
-        data = data[data['cost_of_living'] <= processed_inputs['max_monthly_budget']]
+        data = data[data['average_monthly_cost_$'] <= processed_inputs['max_monthly_budget']]
 
     # Calculate weighted scores
     result_df = weighted_sum(data, processed_inputs)
