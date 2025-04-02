@@ -23,9 +23,9 @@ st.subheader("💰 Cost of Living")
     #cost_options = ["Low", "Moderate", "High"]
     #cost_of_living_preference = st.select_slider("Cost of Living Range", options=cost_options).lower()
 cost_of_living_importance = st.slider("How important is cost of living to you?", 0, 10, 5)
-#max_monthly_budget = st.number_input("Optional: Maximum monthly budget (USD)", min_value=0, value=0, step=100)
-#if max_monthly_budget == 0:
-    #max_monthly_budget = None
+max_monthly_budget = st.number_input("Optional: Maximum monthly budget (USD)", min_value=0, value=0, step=100)
+if max_monthly_budget == 0:
+    max_monthly_budget = None
 st.write("")
 
 # Healthcare
@@ -63,6 +63,8 @@ if st.button("🎯 Find My Ideal Country"):
         'safety_importance': safety_importance,
         'internet_speed_importance': internet_speed_importance
     }
+    if max_monthly_budget is not None:
+        data['max_monthly_budget'] = max_monthly_budget
 
     # Make API call with POST request
     response = requests.post(API_URL, json=data)

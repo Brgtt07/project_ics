@@ -65,8 +65,22 @@ def transform_user_inputs(user_input_dict: Dict[str, Any]) -> Dict[str, float]:
         normalized_inputs[key] = user_input_dict[key] / 10.0  # Scale importance values
 
     # Step 4: Handle max_monthly_budget (need to also scale this value, and to scale it we need to import the weights from the pipeline, complicated)
-    #if user_input_dict.get("max_monthly_budget") is not None:
-    #    normalized_inputs["max_monthly_budget"] = user_input_dict["max_monthly_budget"]
+    if user_input_dict.get("max_monthly_budget") is not None:
+        # Create a single-row DataFrame with the budget and dummy values for other columns
+        simulated_df = pd.DataFrame([{
+            'average_monthly_cost_$': user_input_dict["max_monthly_budget"],
+            'average_yearly_temperature': 0,
+            'internet_speed_mbps': 0,
+            'safety_index': 0,
+            'Healthcare Index': 0
+        }])
+
+        #access the column transformer from the pipeline
+        column_transformer = pipe.named_steps['column_transformer']
+
+        # Transform using the column transformer. [0][0] because the transform returns a numpy array
+        normalized_inputs["max_monthly_budget"] = column_transformer.transform(simulated_df)[0][0]
+        
     return normalized_inputs
 
 
