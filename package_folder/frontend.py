@@ -4,7 +4,7 @@ import requests
 # Cloud Run API URL
 API_URL = 'https://project-ics-210911899890.europe-west1.run.app/recommend-countries'
 # Local API URL for testing
-# api_local = 'http://localhost:8000/recommend-countries'
+api_local = 'http://localhost:8000/recommend-countries'
 
 st.title("🌍 Find Your Ideal Country to Live!")
 st.write("")
@@ -23,9 +23,9 @@ st.subheader("💰 Cost of Living")
     #cost_options = ["Low", "Moderate", "High"]
     #cost_of_living_preference = st.select_slider("Cost of Living Range", options=cost_options).lower()
 cost_of_living_importance = st.slider("How important is cost of living to you?", 0, 10, 5)
-#max_monthly_budget = st.number_input("Optional: Maximum monthly budget (USD)", min_value=0, value=0, step=100)
-#if max_monthly_budget == 0:
-    #max_monthly_budget = None
+max_monthly_budget = st.number_input("Optional: Maximum monthly budget (USD)", min_value=0, value=0, step=100)
+if max_monthly_budget == 0:
+    max_monthly_budget = None
 st.write("")
 
 # Healthcare
@@ -63,9 +63,11 @@ if st.button("🎯 Find My Ideal Country"):
         'safety_importance': safety_importance,
         'internet_speed_importance': internet_speed_importance
     }
+    if max_monthly_budget is not None:
+        data['max_monthly_budget'] = max_monthly_budget
 
     # Make API call with POST request
-    response = requests.post(API_URL, json=data)
+    response = requests.post(api_local, json=data)
     st.markdown("---")  # Adds a horizontal line for separation
     if response.status_code == 200:
         results = response.json()
