@@ -3,9 +3,30 @@ from typing import Dict, Any
 import pickle
 import pandas as pd
 import os
+import pycountry
+import pycountry_convert as pc   # pycountry_convert for country-to-continent mapping
 
 # Get the absolute path to the project directory
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+def get_country_continent_mapping():
+    """
+    Create a dictionary mapping country names (lowercase) to their respective continents.
+    Uses pycountry_convert to map ISO country codes to continent codes.
+    """
+    country_to_continent = {}
+    for country in pycountry.countries:
+        try:
+            country_alpha2 = country.alpha_2  # Get the 2-letter country code
+            continent_code = pc.country_alpha2_to_continent_code(country_alpha2)  # Get the continent code
+            country_to_continent[country.name.lower()] = continent_code  # Store mapping in lowercase
+        except KeyError:
+            continue  # Skip if no continent found
+    return country_to_continent
+
+# Load country-to-continent mapping once
+country_to_continent = get_country_continent_mapping()
+
 
 def transform_user_inputs(user_input_dict: Dict[str, Any]) -> Dict[str, float]:
     """
@@ -80,9 +101,14 @@ def transform_user_inputs(user_input_dict: Dict[str, Any]) -> Dict[str, float]:
 
         # Transform using the column transformer. [0][0] because the transform returns a numpy array
         normalized_inputs["max_monthly_budget"] = column_transformer.transform(simulated_df)[0][0]
-        
-    return normalized_inputs
 
+    # Filter by continent (if selected by user)
+    if "continent_preference" in user_input_dict:
+        selected_continent = user_input_dict["continent_preference"]  # e.g., "EU"
+        filtered_countries = [country for country, continent in country_to_continent.items() if continent == selected_continent]
+        normalized_inputs["filtered_countries"] = [c.lower() for c in filtered_countries]  # Store in lowercase for dataset matching
+
+    return normalized_inputs
 
 
 def encode_preference(preference: any, preference_type: str) -> float:

@@ -9,6 +9,21 @@ api_local = 'http://localhost:8000/recommend-countries'
 st.title("🌍 Find Your Ideal Country to Live!")
 st.write("")
 
+# Continent selection
+st.subheader("🗺️📍 Continent Preference")
+continent_options = {
+    "Surprise Me": None,
+    "Africa": "AF",
+    "Asia": "AS",
+    "Europe": "EU",
+    "North America": "NA",
+    "Oceania": "OC",
+    "South America": "SA"
+}
+continent_preference = st.selectbox("Select Continent", options=list(continent_options.keys()))
+selected_continent = continent_options[continent_preference]
+st.write("")
+
 # Climate/Temperature
 st.subheader("🌡️ Temperature Preference")
 # Defining the qualitative options
@@ -61,8 +76,10 @@ if st.button("🎯 Find My Ideal Country"):
         'cost_of_living_importance': cost_of_living_importance,
         'healthcare_importance': healthcare_importance,
         'safety_importance': safety_importance,
-        'internet_speed_importance': internet_speed_importance
+        'internet_speed_importance': internet_speed_importance,
+        'continent_preference': selected_continent
     }
+
     if max_monthly_budget is not None:
         data['max_monthly_budget'] = max_monthly_budget
 
@@ -75,7 +92,7 @@ if st.button("🎯 Find My Ideal Country"):
         if isinstance(results, list):
             for i, country in enumerate(results, 1):
                 # Display country name and score in a single line
-                st.write(f"**#{i} 🏆 {country['country']}** - Match Score: {country['country_score'] * 100:.1f}")
+                st.write(f"**#{i} 🏆 {country['country'].title()}** - Match Score: {country['country_score'] * 100:.1f}%")
         else:
             st.write("API response error:", results)
     else:
