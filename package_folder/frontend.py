@@ -1,3 +1,19 @@
+"""
+Streamlit frontend for the Ideal Country Selector application.
+
+This module implements the user interface for the Ideal Country Selector application
+using Streamlit. It provides input forms for users to specify their preferences and
+importance ratings for various factors (climate, cost of living, healthcare, safety,
+and internet speed). The user inputs are sent to the backend API, which returns 
+recommended countries based on the user's preferences.
+
+The frontend displays:
+    - Input sliders and selectors for user preferences
+    - Importance rating sliders for each factor
+    - Optional maximum monthly budget input
+    - Results section showing the top matching countries with scores
+"""
+
 import streamlit as st
 import requests
 
