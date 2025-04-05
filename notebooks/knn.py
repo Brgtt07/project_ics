@@ -9,7 +9,7 @@ from sklearn.preprocessing import MinMaxScaler
 
 def scale_data_and_get_pipeline(df, save_path=None):
     """
-    Scales numeric features using MinMaxScaler and returns the scaled numeric data, 
+    Takes the dataframe, Scales numeric features using MinMaxScaler and returns the scaled df, 
     the pipeline, and the list of numeric feature names. Optionally saves the pipeline.
     """
     numeric_features = df.select_dtypes(include=np.number).columns.tolist()
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     # --- Configuration ---
     DATA_PATH = "../raw_data/merged_country_level/merged_dataset_with_knn.csv"
     PIPELINE_PATH = "../models/v2_scaler_pipeline.pkl" 
-    N_NEIGHBORS = 100
+    N_NEIGHBORS = 155
     
     # Example Ideal Country Values (keys must match numeric features found later)
     ideal_country_values = {
