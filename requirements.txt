@@ -12,3 +12,7 @@ numpy
 
 #.env
 python-dotenv
+
+# python countries library
+pycountry
+pycountry-convert
