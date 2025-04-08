@@ -1,9 +1,8 @@
 """
 FastAPI backend for the Ideal Country Selector application.
 
-This module implements the REST API endpoints for the Ideal Country Selector application.
-It provides endpoints for recommending countries based on user preferences and handles
-the integration between the frontend and the recommendation algorithm.
+This module implements the API endpoints for the Ideal Country Selector application.
+It provides endpoints for recommending countries based on user preferences and bridges the integration between the frontend and the recommendation algorithm.
 
 Endpoints:
     - GET /: Simple health check endpoint
@@ -11,9 +10,9 @@ Endpoints:
 """
 
 from fastapi import FastAPI, HTTPException
-from .data_utils import load_pipeline
-from .input_processor import transform_user_inputs
-from .similarity import find_similar_countries
+from package_folder.data_utils import load_pipeline
+from package_folder.input_processor import transform_user_inputs
+from package_folder.similarity import find_similar_countries
 from typing import Dict, Any, List
 import pandas as pd
 import os
@@ -55,13 +54,15 @@ def recommend_countries_endpoint(user_inputs: Dict[str, Any]) -> List[Dict[str, 
     """
     try:
         # 1. Transform raw user inputs using the input_processor module
+        # where scaled_preferences is the values for the features of the ideal country, 
+        # scaled_weights is the importance given to each feature, and scaled_budget is the maximum monthly budget normalized like we do for cost_of_living.
         scaled_preferences, scaled_weights, scaled_budget = transform_user_inputs(user_inputs, pipeline)
 
         # 2. Extract continent preference (if any)
         continent_code = user_inputs.get("continent_preference") # e.g., "EU", "AS", or None
 
         # 3. Determine number of recommendations (with validation)
-        n_neighbors = 10 # Default
+        n_neighbors = 5 # Default
         num_rec_input = user_inputs.get("num_recommendations")
         if num_rec_input is not None:
             try:
@@ -110,4 +111,3 @@ def recommend_countries_endpoint(user_inputs: Dict[str, Any]) -> List[Dict[str, 
         # Optionally log the full traceback here
         raise HTTPException(status_code=500, detail="Internal server error.")
 
-# No changes needed for error handling comments, they remain relevant.

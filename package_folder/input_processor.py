@@ -5,41 +5,6 @@ from typing import Dict, Tuple, Optional, Any
 # Import necessary components from data_utils
 from .data_utils import load_pipeline
 
-# --- Preference Encoding ---
-
-def encode_preference(preference: str, preference_type: str) -> float:
-    """Maps qualitative user preference to a numerical value based on dataset metrics."""
-    # Mappings based on analysis of original data/user expectations
-    mappings = {
-        "climate_preference": {"hot": 25.0, "mild": 18.0, "cold": 11.0},
-        # Placeholders - ensure these map meaningfully if sliders are added later
-        "cost_of_living_preference": {"low": 400.0, "moderate": 800.0, "high": 2500.0},
-        "healthcare_preference": {"excellent": 75.0, "good": 65.0, "fair": 50.0},
-        "safety_preference": {"very_safe": 75.0, "safe": 65.0, "moderate": 50.0},
-        "internet_speed_preference": {"fast": 200.0, "moderate": 100.0, "slow": 50.0}
-    }
-    default_values = {
-        "climate_preference": 18.0, # mild
-        "cost_of_living_preference": 800.0, # moderate (default if not provided)
-        "healthcare_preference": 65.0, # good (default if not provided)
-        "safety_preference": 65.0, # safe (default if not provided)
-        "internet_speed_preference": 100.0 # moderate (default if not provided)
-    }
-
-    # Normalize preference string (lowercase, handle potential whitespace)
-    preference = str(preference).lower().strip()
-
-    if preference_type not in mappings:
-        raise ValueError(f"Invalid preference type: '{preference_type}'")
-
-    # Use the mapping, falling back to default if the specific preference isn't recognized
-    if preference not in mappings[preference_type]:
-         print(f"Warning: Invalid preference value '{preference}' for {preference_type}. Using default.")
-         return default_values[preference_type]
-
-    return mappings[preference_type][preference]
-
-
 # --- Input Transformation ---
 
 def transform_user_inputs(user_input_dict: Dict[str, Any], pipeline: Any) -> Tuple[Dict[str, float], Dict[str, float], Optional[float]]:
@@ -69,29 +34,33 @@ def transform_user_inputs(user_input_dict: Dict[str, Any], pipeline: Any) -> Tup
         "Healthcare Index"
     ]
 
-    # 1. Encode qualitative preferences to numerical values
-    # Use get with defaults for preferences that might be missing or have non-slider inputs
+    # 1. Map preferences to numerical values
+    # Climate preference mapping
+    climate_mapping = {"hot": 25.0, "mild": 18.0, "cold": 11.0}
+    climate_default = 18.0  # mild
+    
+    # Get climate preference and normalize it
+    climate_pref = str(user_input_dict.get("climate_preference", "mild")).lower().strip()
+    
+    # Validate climate preference
+    if climate_pref not in climate_mapping:
+        print(f"Warning: Invalid climate preference '{climate_pref}'. Using default (mild).")
+        climate_value = climate_default
+    else:
+        climate_value = climate_mapping[climate_pref]
+    
+    # Create dictionary of numerical preference values
     numerical_prefs = {
-        "average_yearly_temperature": encode_preference(
-            user_input_dict.get("climate_preference", "mild"), "climate_preference"
-        ),
-        # For factors without sliders, use defaults defined in encode_preference
-        "average_monthly_cost_$": encode_preference(
-             user_input_dict.get("cost_of_living_preference", "moderate"), "cost_of_living_preference"
-        ),
-        "Healthcare Index": encode_preference(
-            user_input_dict.get("healthcare_preference", "good"), "healthcare_preference"
-        ),
-        "safety_index": encode_preference(
-            user_input_dict.get("safety_preference", "safe"), "safety_preference"
-        ),
-        "internet_speed_mbps": encode_preference(
-            user_input_dict.get("internet_speed_preference", "moderate"), "internet_speed_preference"
-        )
+        # Use default values for preferences that don't have a slider in the frontend
+        "average_monthly_cost_$": 800.0,
+        "average_yearly_temperature": climate_value,  
+        "internet_speed_mbps": 100.0,
+        "safety_index": 65.0,
+        "Healthcare Index": 65.0
     }
 
     # 2. Scale numerical preferences using the pipeline
-    # Ensure the DataFrame has columns in the exact order the pipeline expects
+    # ATTENTION!!! Ensure the DataFrame has columns in the exact order the pipeline expects
     prefs_df = pd.DataFrame([numerical_prefs], columns=pipeline_features)
     transformed_prefs = pipeline.transform(prefs_df)[0] # Get the first (only) row
 
