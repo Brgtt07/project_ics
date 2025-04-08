@@ -10,16 +10,22 @@ Endpoints:
     - POST /recommend-countries: Main endpoint for generating country recommendations
 """
 
-from fastapi import FastAPI
-from package_folder.scaling_pipeline import transform_user_inputs
-from package_folder.similariy_search import find_similar_countries
+from fastapi import FastAPI, HTTPException
+from .data_utils import load_pipeline
+from .input_processor import transform_user_inputs
+from .similarity import find_similar_countries
+from typing import Dict, Any, List
 import pandas as pd
 import os
+import numpy as np
 
 # Get the absolute path to the project directory
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 app = FastAPI()
+
+# Load pipeline once when the API starts - handles caching internally
+pipeline = load_pipeline()
 
 @app.get('/')
 def root():
@@ -29,42 +35,79 @@ def root():
     Returns:
         dict: Simple status message
     """
-    return {'hello': 'world'}
+    return {'status': 'ok'}
 
 @app.post("/recommend-countries")
-def recommend_countries(user_inputs: dict):
+def recommend_countries_endpoint(user_inputs: Dict[str, Any]) -> List[Dict[str, Any]]:
     """
-    Generate country recommendations based on user preferences.
-    
-    This endpoint processes the user's preferences and importance ratings,
-    filters countries based on the user's maximum monthly budget (if provided),
-    the continent preference (if provided), and returns a ranked list of
-    the most similar countries with detailed explanation of differences.
-    
+    Endpoint to generate country recommendations based on user preferences.
+
+    Processes user inputs, finds similar countries using the core logic,
+    and returns a ranked list with detailed scores and values.
+
     Args:
-        user_inputs: Dictionary containing user preferences and importance ratings:
-            - climate_preference: String ("hot", "mild", "cold")
-            - *_importance: Float (0-10) for each preference's importance
-            - max_monthly_budget: Optional Float representing maximum budget in USD
-            - continent_preference: Optional String representing preferred continent
-    
+        user_inputs: Dictionary from the frontend request body containing preferences
+                     (e.g., climate_preference), importances (e.g., climate_importance),
+                     optional max_monthly_budget, and optional continent_preference (e.g., "EU").
+
     Returns:
-        List of dictionaries, each containing:
-            - country: Country name
-            - similarity_score: Overall similarity score (higher is better)
-            - feature specific deltas in original units (e.g., average_monthly_cost_$_delta)
-            - original feature values for each country
+        List of dictionaries, each representing a recommended country.
     """
-    # Process user inputs (encoding and normalization), returns a dictionary
-    processed_inputs = transform_user_inputs(user_inputs)
-    
-    # Find similar countries using KNN with explainable results
-    # The filtering for max_monthly_budget and continent is now handled inside find_similar_countries
-    n_neighbors = 10  # Default number of recommendations to return
-    if user_inputs.get("num_recommendations"):
-        n_neighbors = min(int(user_inputs["num_recommendations"]), 50)  # Limit to maximum 50
+    try:
+        # 1. Transform raw user inputs using the input_processor module
+        scaled_preferences, scaled_weights, scaled_budget = transform_user_inputs(user_inputs, pipeline)
+
+        # 2. Extract continent preference (if any)
+        continent_code = user_inputs.get("continent_preference") # e.g., "EU", "AS", or None
+
+        # 3. Determine number of recommendations (with validation)
+        n_neighbors = 10 # Default
+        num_rec_input = user_inputs.get("num_recommendations")
+        if num_rec_input is not None:
+            try:
+                n_neighbors = int(num_rec_input)
+                if not 1 <= n_neighbors <= 50: # Add range validation
+                    raise ValueError("Number of recommendations must be between 1 and 50.")
+            except (ValueError, TypeError):
+                # Consider logging this invalid input
+                print(f"Invalid num_recommendations value: {num_rec_input}. Using default {n_neighbors}.")
+                # Optionally raise an HTTPException for bad input:
+                # raise HTTPException(status_code=400, detail="Invalid value for num_recommendations.")
+                n_neighbors = 10 # Fallback to default
+
+        # 4. Find similar countries using the similarity module
+        result_df = find_similar_countries(
+            scaled_preferences=scaled_preferences,
+            scaled_weights=scaled_weights,
+            scaled_budget=scaled_budget,
+            continent_code=continent_code,
+            n_neighbors=n_neighbors
+        )
+
+        # 5. Convert results DataFrame to list of dictionaries for JSON response
+        # Handle potential NaN/NaT values appropriately for JSON serialization
+        # Using replace with np.nan first, then fillna for robust conversion
+        result_df = result_df.replace({pd.NaT: None, np.nan: None})
+        # Ensure numerical columns are appropriate types before dict conversion
+        # (Example: convert scores/deltas explicitly if needed)
         
-    result_df = find_similar_countries(processed_inputs, n_neighbors=n_neighbors)
-    
-    # Return the results as a list of dictionaries
-    return result_df.to_dict(orient="records")
+        results = result_df.to_dict(orient="records")
+
+        return results
+
+    except FileNotFoundError as e:
+        # Handle errors related to loading data/pipeline files
+        print(f"API Error: Data or pipeline file not found. {e}")
+        raise HTTPException(status_code=500, detail="Internal server error: Configuration file missing.")
+    except ValueError as e:
+        # Handle errors like missing columns or invalid preference types
+        print(f"API Error: Value error during processing. {e}")
+        # Provide a more specific error if possible, otherwise a general one
+        raise HTTPException(status_code=400, detail=f"Bad request: {e}")
+    except Exception as e:
+        # Catch-all for other unexpected errors
+        print(f"API Error: An unexpected error occurred. {e}")
+        # Optionally log the full traceback here
+        raise HTTPException(status_code=500, detail="Internal server error.")
+
+# No changes needed for error handling comments, they remain relevant.
