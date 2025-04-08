@@ -108,7 +108,7 @@ if st.button("🎯 Find My Ideal Country"):
         if isinstance(results, list):
             for i, country in enumerate(results, 1):
                 # Display country name and score in a single line
-                st.write(f"**#{i} 🏆 {country['country'].title()}** - Match Score: {country['country_score'] * 100:.1f}%")
+                st.write(f"**#{i} 🏆 {country['country'].title()}** - Match Score: {country['similarity_score'] * 100:.1f}%")
         else:
             st.write("API response error:", results)
     else:

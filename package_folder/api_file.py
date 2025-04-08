@@ -12,7 +12,7 @@ Endpoints:
 
 from fastapi import FastAPI
 from package_folder.scaling_pipeline import transform_user_inputs
-from package_folder.weighted_sum import weighted_sum
+from package_folder.similariy_search import find_similar_countries
 import pandas as pd
 import os
 
@@ -38,36 +38,33 @@ def recommend_countries(user_inputs: dict):
     
     This endpoint processes the user's preferences and importance ratings,
     filters countries based on the user's maximum monthly budget (if provided),
-    the continent preference (if provided),
-    and returns a ranked list of the top matching countries.
+    the continent preference (if provided), and returns a ranked list of
+    the most similar countries with detailed explanation of differences.
     
     Args:
         user_inputs: Dictionary containing user preferences and importance ratings:
             - climate_preference: String ("hot", "mild", "cold")
             - *_importance: Float (0-10) for each preference's importance
             - max_monthly_budget: Optional Float representing maximum budget in USD
+            - continent_preference: Optional String representing preferred continent
     
     Returns:
         List of dictionaries, each containing:
             - country: Country name
-            - country_score: Similarity score (higher is better)
+            - similarity_score: Overall similarity score (higher is better)
+            - feature specific deltas in original units (e.g., average_monthly_cost_$_delta)
+            - original feature values for each country
     """
     # Process user inputs (encoding and normalization), returns a dictionary
     processed_inputs = transform_user_inputs(user_inputs)
-
-    # Load the dataset
-    data_path = os.path.join(project_dir, "raw_data", "merged_country_level", "scaled_merged_data_after_imputation.csv")
-    data = pd.read_csv(data_path)
-
-    # Filter the dataset based on the max_monthly_budget
-    if 'max_monthly_budget' in processed_inputs:
-        data = data[data['average_monthly_cost_$'] <= processed_inputs['max_monthly_budget']]
-
-    # Filter by continent before the normalization
-    if processed_inputs.get("filtered_countries"):  # To make sure there are filtered countries
-        data = data[data["country"].str.lower().isin([c.lower() for c in processed_inputs["filtered_countries"]])]
-
-    # Calculate weighted scores
-    result_df = weighted_sum(data, processed_inputs)
-
+    
+    # Find similar countries using KNN with explainable results
+    # The filtering for max_monthly_budget and continent is now handled inside find_similar_countries
+    n_neighbors = 10  # Default number of recommendations to return
+    if user_inputs.get("num_recommendations"):
+        n_neighbors = min(int(user_inputs["num_recommendations"]), 50)  # Limit to maximum 50
+        
+    result_df = find_similar_countries(processed_inputs, n_neighbors=n_neighbors)
+    
+    # Return the results as a list of dictionaries
     return result_df.to_dict(orient="records")
