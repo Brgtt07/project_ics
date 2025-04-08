@@ -3,7 +3,7 @@ import numpy as np
 from typing import Dict, Optional, Any
 
 # Import necessary components from data_utils
-from .data_utils import load_data, load_pipeline, COUNTRY_CONTINENT_MAP
+from package_folder.data_utils import load_data, load_pipeline, COUNTRY_CONTINENT_MAP
 
 # --- Value Unscaling ---
 

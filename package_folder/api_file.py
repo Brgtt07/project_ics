@@ -61,21 +61,9 @@ def recommend_countries_endpoint(user_inputs: Dict[str, Any]) -> List[Dict[str, 
         # 2. Extract continent preference (if any)
         continent_code = user_inputs.get("continent_preference") # e.g., "EU", "AS", or None
 
-        # 3. Determine number of recommendations (with validation)
-        n_neighbors = 5 # Default
-        num_rec_input = user_inputs.get("num_recommendations")
-        if num_rec_input is not None:
-            try:
-                n_neighbors = int(num_rec_input)
-                if not 1 <= n_neighbors <= 50: # Add range validation
-                    raise ValueError("Number of recommendations must be between 1 and 50.")
-            except (ValueError, TypeError):
-                # Consider logging this invalid input
-                print(f"Invalid num_recommendations value: {num_rec_input}. Using default {n_neighbors}.")
-                # Optionally raise an HTTPException for bad input:
-                # raise HTTPException(status_code=400, detail="Invalid value for num_recommendations.")
-                n_neighbors = 10 # Fallback to default
-
+        # 3. define the number of country recommendations
+        n_neighbors = 5 # Default number of country reccomendations
+        
         # 4. Find similar countries using the similarity module
         result_df = find_similar_countries(
             scaled_preferences=scaled_preferences,
@@ -110,4 +98,3 @@ def recommend_countries_endpoint(user_inputs: Dict[str, Any]) -> List[Dict[str, 
         print(f"API Error: An unexpected error occurred. {e}")
         # Optionally log the full traceback here
         raise HTTPException(status_code=500, detail="Internal server error.")
-

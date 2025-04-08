@@ -16,17 +16,16 @@ The frontend displays:
 
 import streamlit as st
 import requests
-import pandas as pd # Keep for potential future use, though less critical now
-import os # Import os to read environment variable
+import pandas as pd 
+import os
 
 # --- Configuration ---
 # Use environment variable for API URL or fallback to local
-API_BASE_URL = os.getenv("API_URL", "http://localhost:8000")
-RECOMMEND_ENDPOINT = f"{API_BASE_URL}/recommend-countries"
-# API_URL_CLOUD = 'https://project-ics-210911899890.europe-west1.run.app/recommend-countries' # Example Cloud Run URL
+API_BASE_URL = os.getenv("API_URL", "http://localhost:8000") 
+RECOMMEND_ENDPOINT_URL = f"{API_BASE_URL}/recommend-countries"
 
 # --- UI Setup --- 
-st.title("🌍 Find Your Ideal Country to Live!")
+st.title("🌍 Find Your Dream Country to Live!")
 st.write("")
 
 # --- User Inputs ---
@@ -54,7 +53,7 @@ st.write("")
 st.subheader("💰 Cost of Living")
 cost_of_living_importance = st.slider("Importance", 0, 10, 5, key="cost_importance")
 max_monthly_budget = st.number_input(
-    "Optional: Max Monthly Budget (USD)", min_value=0, value=0, step=100
+    "Optional: Max Monthly Budget (in USD)", min_value=0, value=0, step=100
 )
 # Treat 0 as no budget specified
 max_monthly_budget = None if max_monthly_budget == 0 else max_monthly_budget
@@ -89,14 +88,13 @@ if st.button("🎯 Find My Ideal Country", use_container_width=True):
         'internet_speed_importance': internet_speed_importance,
         'continent_preference': selected_continent,
         'max_monthly_budget': max_monthly_budget
-        # 'num_recommendations': 10 # Optional: Can add a slider/input for this
     }
 
-    # Make API call (consider adding a spinner)
+    # Make API call
     try:
         with st.spinner("Finding your perfect match..."):
-            # Use RECOMMEND_ENDPOINT defined earlier
-            response = requests.post(RECOMMEND_ENDPOINT, json=payload, timeout=30) # Add timeout
+            # Use RECOMMEND_ENDPOINT_URL defined earlier
+            response = requests.post(RECOMMEND_ENDPOINT_URL, json=payload, timeout=30) # Add timeout
             response.raise_for_status() # Raise HTTPError for bad responses (4xx or 5xx)
 
         results = response.json()
@@ -114,18 +112,18 @@ if st.button("🎯 Find My Ideal Country", use_container_width=True):
 
             for i, country_data in enumerate(results, 1):
                 country_name = country_data.get('country', f'Unknown Country {i}').title()
-                # Use 'similarity_score' directly - backend guarantees it
+                # Use 'similarity_score' directly
                 overall_score = country_data.get('similarity_score', 0)
                 # Handle potential 'N/A' string from API conversion if fillna('N/A') was used
                 if isinstance(overall_score, str) and overall_score == 'N/A':
                     overall_score = 0
                 overall_score_percent = (float(overall_score) or 0) * 100
 
-                expander_title = f"#{i} {country_name} - Overall Match: {overall_score_percent:.1f}%"
-                with st.expander(expander_title, expanded=(i <= 3)): # Expand top 3
-                    st.markdown("**Overall Match Score**")
+                expander_title = f"#{i} {country_name} - Overall Match: {overall_score_percent:.0f}%"
+                with st.expander(expander_title, expanded=(i <= 1)): # Expand top 3
+                    st.markdown("**Overall Match score:**")
                     st.progress(float(overall_score or 0))
-                    st.markdown("**Factor Match Scores**")
+                    st.markdown("**Detailed Scores:**")
 
                     # Use columns for factor scores based on the number of features
                     feature_items = list(feature_display_map.items())
@@ -147,7 +145,7 @@ if st.button("🎯 Find My Ideal Country", use_container_width=True):
                             # delta = country_data.get(f"{feature_key}_delta", "N/A")
                             # tooltip_text = f"Value: {original_val} (Delta: {delta:.1f})"
 
-                            st.text(f"{label}: {feature_score_percent:.1f}%")
+                            st.text(f"{label}: {feature_score_percent:.0f}%")
                             st.progress(float(feature_score or 0))
 
         elif isinstance(results, list) and not results:
@@ -161,6 +159,3 @@ if st.button("🎯 Find My Ideal Country", use_container_width=True):
         st.error(f"Network error: Could not connect to the recommendation service. ({e})")
     except Exception as e:
         st.error(f"An error occurred while processing results: {e}")
-        # Optionally log the traceback for debugging
-        # import traceback
-        # st.text(traceback.format_exc())
