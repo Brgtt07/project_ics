@@ -16,6 +16,7 @@ The frontend displays:
 
 import streamlit as st
 import requests
+import pandas as pd
 
 # Cloud Run API URL
 API_URL = 'https://project-ics-210911899890.europe-west1.run.app/recommend-countries'
@@ -28,7 +29,7 @@ st.write("")
 # Continent selection
 st.subheader("🗺️📍 Continent Preference")
 continent_options = {
-    "Surprise Me": None,
+    "Any": None,
     "Africa": "AF",
     "Asia": "AS",
     "Europe": "EU",
@@ -104,11 +105,136 @@ if st.button("🎯 Find My Ideal Country"):
     st.markdown("---")  # Adds a horizontal line for separation
     if response.status_code == 200:
         results = response.json()
-        st.subheader("🎯 Top Matching Countries:")
-        if isinstance(results, list):
+        st.subheader("🎯 Top Matching Countries")
+        
+        if isinstance(results, list) and len(results) > 0:
+            # Identify the score key used in the API response
+            sample_country = results[0]
+            # Different versions might use different keys for the overall score
+            if 'country_score' in sample_country:
+                score_key = 'country_score'
+            elif 'similarity_score' in sample_country:
+                score_key = 'similarity_score'
+            else:
+                # If we can't find either key, use the first key that contains 'score'
+                score_candidates = [k for k in sample_country.keys() if 'score' in k.lower()]
+                score_key = score_candidates[0] if score_candidates else 'country'  # Fallback if no score found
+            
             for i, country in enumerate(results, 1):
-                # Display country name and score in a single line
-                st.write(f"**#{i} 🏆 {country['country'].title()}** - Match Score: {country['similarity_score'] * 100:.1f}%")
+                try:
+                    # Get country name with fallback
+                    country_name = country.get('country', f'Country {i}')
+                    if isinstance(country_name, str):
+                        country_name = country_name.title()
+                    
+                    # Get score with fallback
+                    if score_key in country and country[score_key] is not None:
+                        country_score = country[score_key] * 100
+                    else:
+                        country_score = 0
+                    
+                    # Create an expander for each country to make the list more compact
+                    with st.expander(f"#{i} 🏆 {country_name} - Overall Match: {country_score:.1f}%", expanded=i<=3):
+                        # Display overall score at the top with a larger progress bar
+                        st.markdown("Overall Match Score")
+                        st.progress(float(country[score_key]) if score_key in country else 0)
+                        
+                        st.markdown("Individual Factors")
+                        # Create columns for individual feature scores
+                        col1, col2 = st.columns(2)
+                        
+                        # Display individual feature match scores in a more compact layout
+                        feature_map = {
+                            'average_monthly_cost_$': '💰 Cost of Living',
+                            'average_yearly_temperature': '🌡️ Temperature',
+                            'internet_speed_mbps': '🌐 Internet Speed',
+                            'safety_index': '🛡️ Safety',
+                            'Healthcare Index': '🏥 Healthcare'
+                        }
+                        
+                        # Alternative names that might appear in the API response
+                        feature_aliases = {
+                            'average_monthly_cost_$': ['cost_of_living', 'cost', 'monthly_cost'],
+                            'average_yearly_temperature': ['temperature', 'climate', 'yearly_temperature'],
+                            'internet_speed_mbps': ['internet', 'internet_speed'],
+                            'safety_index': ['safety'],
+                            'Healthcare Index': ['healthcare', 'health']
+                        }
+                        
+                        # Map feature names to their potential match score keys with more fallbacks
+                        feature_score_map = {}
+                        for feature, label in feature_map.items():
+                            # Try different naming patterns for match scores
+                            potential_keys = [
+                                f"{feature}_match_score",
+                                f"{feature}_score"
+                            ]
+                            
+                            # Add alias-based keys
+                            if feature in feature_aliases:
+                                for alias in feature_aliases[feature]:
+                                    potential_keys.extend([
+                                        f"{alias}_match_score",
+                                        f"{alias}_score"
+                                    ])
+                            
+                            # Look for any key containing feature name or alias and 'score'
+                            score_keys = [k for k in country.keys() if 'score' in k.lower()]
+                            for key in score_keys:
+                                if feature.lower() in key.lower():
+                                    potential_keys.append(key)
+                                elif feature in feature_aliases:
+                                    for alias in feature_aliases[feature]:
+                                        if alias.lower() in key.lower():
+                                            potential_keys.append(key)
+                            
+                            # Find the first matching key that exists
+                            for key in potential_keys:
+                                if key in country:
+                                    feature_score_map[feature] = key
+                                    break
+                        
+                        # If no feature scores found, try to calculate them from deltas if available
+                        if not feature_score_map:
+                            for feature in feature_map.keys():
+                                delta_key = f"{feature}_delta"
+                                if delta_key in country and not pd.isna(country[delta_key]):
+                                    # Create a simple score from the delta (smaller delta = higher score)
+                                    max_delta = 1.0  # Assume a reasonable max delta
+                                    delta = abs(float(country[delta_key]))
+                                    score = max(0, 1.0 - (delta / max_delta))
+                                    # Store the score directly in the country dict
+                                    match_key = f"{feature}_match_score"
+                                    country[match_key] = score
+                                    feature_score_map[feature] = match_key
+                        
+                        # If still no feature scores found and no warning shown yet, show a message
+                        if not feature_score_map:
+                            st.info("Detailed factor match scores not available. Try adjusting your preferences or running the search again.")
+                        
+                        # Left column features
+                        with col1:
+                            for idx, (feature, label) in enumerate(list(feature_map.items())[:3]):
+                                if feature in feature_score_map:
+                                    match_key = feature_score_map[feature]
+                                    if match_key in country and not pd.isna(country[match_key]):
+                                        score = country[match_key] * 100
+                                        # Create a color-coded progress bar based on the score
+                                        st.text(f"{label}: {score:.1f}%")
+                                        st.progress(float(country[match_key]))
+                        
+                        # Right column features
+                        with col2:
+                            for idx, (feature, label) in enumerate(list(feature_map.items())[3:]):
+                                if feature in feature_score_map:
+                                    match_key = feature_score_map[feature]
+                                    if match_key in country and not pd.isna(country[match_key]):
+                                        score = country[match_key] * 100
+                                        # Create a color-coded progress bar based on the score
+                                        st.text(f"{label}: {score:.1f}%")
+                                        st.progress(float(country[match_key]))
+                except Exception as e:
+                    st.error(f"Error displaying country #{i}: {str(e)}")
         else:
             st.write("API response error:", results)
     else:

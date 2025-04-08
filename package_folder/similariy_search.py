@@ -187,11 +187,31 @@ def find_similar_countries(processed_inputs: Dict[str, Any], n_neighbors: int = 
             result[delta_col_name] = original_feature_values - ideal_value
             # Add the original feature values for reference
             result[f"{feature}_original"] = original_feature_values
+            
+            # Calculate individual feature match score (higher is better)
+            # For each feature, calculate a normalized similarity score
+            # Get the max delta across all countries for this feature for normalization
+            all_deltas = np.abs(original_data[feature] - ideal_value)
+            max_delta = np.max(all_deltas) if len(all_deltas) > 0 else 1.0
+            
+            # Avoid division by zero and normalize to 0-1 range
+            if max_delta > 0:
+                # Calculate match score (inverse of normalized absolute delta)
+                # Smaller delta = higher score
+                match_scores = 1 - (np.abs(result[delta_col_name]) / max_delta)
+                # Ensure scores are within 0-1 range
+                match_scores = np.clip(match_scores, 0, 1)
+                # Store in result DataFrame
+                result[f"{feature}_match_score"] = match_scores
+            else:
+                # If all countries have the same value (max_delta = 0), they all match perfectly
+                result[f"{feature}_match_score"] = np.ones(len(result))
         else:
             # Handle case where feature doesn't exist or lengths don't match
             # Just set deltas to NaN to avoid errors
             result[f"{feature}_delta"] = np.nan
             result[f"{feature}_original"] = np.nan
+            result[f"{feature}_match_score"] = np.nan
     
     # Return the sorted results (by similarity score)
     return result.sort_values('similarity_score', ascending=False)
