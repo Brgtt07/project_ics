@@ -23,12 +23,11 @@ create_artifacts_repo:
 
 # Step 3
 build_for_production:
-	docker build -t  $$GCP_REGION-docker.pkg.dev/$$GCP_PROJECT/$$ARTIFACTSREPO/$$IMAGE:prod .
+	docker build -t $$GCP_REGION-docker.pkg.dev/$$GCP_PROJECT/$$ARTIFACTSREPO/$$IMAGE:prod .
 
 ### Step 3 (⚠️ M1 M2 M3 M4 M5 SPECIFICALLY)
 m_chip_build_image_production:
 	docker build --platform linux/amd64 -t $$GCP_REGION-docker.pkg.dev/$$GCP_PROJECT/$$ARTIFACTSREPO/$$IMAGE:prod .
-
 
 ## Step 4
 push_image_production:
@@ -38,11 +37,42 @@ push_image_production:
 deploy_to_cloud_run:
 	gcloud run deploy --image $$GCP_REGION-docker.pkg.dev/$$GCP_PROJECT/$$ARTIFACTSREPO/$$IMAGE:prod --memory $$MEMORY --region $$GCP_REGION
 
+#########
+## PROJECT SETUP
+#########
 
+install:
+	pip install -e .
+
+install_dev:
+	pip install -e ".[dev]"
+
+#########
+## TESTING
+#########
+
+test:
+	pytest -v
+
+lint:
+	flake8 package_folder
+	pylint package_folder
+
+#########
+## RUNNING LOCAL
+#########
+
+run_api:
+	python -m package_folder.api_file
+
+run_notebook:
+	jupyter notebook notebooks/model.ipynb
+
+#########
+## CLOUD MANAGEMENT
+#########
 
 # Disabling the Service
-# Adjust the service's configuration to scale down to zero instances.
-# This way, no resources will be used, and you won't incur charges for active instances.
 cloud_run_disable_service:
 	gcloud run services update $$INSTANCE --min-instances=0
 
