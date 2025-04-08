@@ -21,7 +21,7 @@ import os
 
 # --- Configuration ---
 # Use environment variable for API URL or fallback to local
-API_BASE_URL = os.getenv("GCP_API_URL", "http://localhost:8000") 
+API_BASE_URL = os.getenv("API_URL", "https://project-ics-mvp-600927923332.europe-west1.run.app") 
 RECOMMEND_ENDPOINT_URL = f"{API_BASE_URL}/recommend-countries"
 
 # --- UI Setup --- 
