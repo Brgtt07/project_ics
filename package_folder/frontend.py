@@ -155,7 +155,11 @@ if st.button("🎯 Find My Ideal Country", use_container_width=True):
             st.error("Received an unexpected response from the server.")
             st.json(results) # Show the raw response for debugging
 
+    except requests.exceptions.ConnectionError:
+        st.error("Connection error: Unable to connect to the recommendation service. Please check your internet connection.")
+    except requests.exceptions.Timeout:
+        st.error("Timeout error: The request to the recommendation service took too long. Please try again later.")
+    except requests.exceptions.HTTPError as e:
+        st.error(f"HTTP error: Received a {e.response.status_code} status code from the recommendation service.")
     except requests.exceptions.RequestException as e:
-        st.error(f"Network error: Could not connect to the recommendation service. ({e})")
-    except Exception as e:
-        st.error(f"An error occurred while processing results: {e}")
+        st.error(f"Network error: An unexpected error occurred. ({e})")
