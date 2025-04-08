@@ -1,3 +1,19 @@
+"""
+Module for calculating country recommendations based on user preferences.
+
+This module implements the core recommendation algorithm for the Ideal Country Selector 
+application. It uses a weighted sum approach to calculate similarity scores between user 
+preferences and country data. The algorithm considers the importance weights provided by 
+the user to prioritize certain factors over others.
+
+Input data:
+    - Normalized country dataset with metrics like cost of living, climate, healthcare, etc.
+    - User preferences and importance weights for each metric
+    
+Output data:
+    - Ranked list of countries with similarity scores
+"""
+
 import pandas as pd
 import os
 
@@ -6,13 +22,32 @@ project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 def weighted_sum(data: pd.DataFrame, user_inputs: dict) -> pd.DataFrame:
     """
-
-    Params:
-    - data: Normalized dataset (scaled betweeen 0-1)
-    - user_inputs: user preferences and their importance (between 0-1)
-
-    Output:
-    - DataFrame with "country_score" column
+    Calculate country recommendations based on user preferences using a weighted similarity approach.
+    
+    This function computes similarity scores between user preferences and country data, 
+    weighting each factor by its importance to the user. The algorithm calculates the 
+    absolute difference between user preferences and country metrics, applies importance 
+    weights, and normalizes the final scores. Countries are then ranked by their scores.
+    
+    Args:
+        data: Normalized dataset (scaled between 0-1) containing country data with columns:
+            - country: Country name
+            - average_monthly_cost_$: Cost of living in USD (scaled)
+            - average_yearly_temperature: Average temperature in °C (scaled)
+            - internet_speed_mbps: Internet speed in Mbps (scaled)
+            - safety_index: Safety index (scaled)
+            - Healthcare Index: Healthcare quality index (scaled)
+            
+        user_inputs: Dictionary with user preferences and importance weights:
+            - *_preference: User preference for each factor (scaled between 0-1)
+            - *_importance: User-specified importance for each factor (scaled between 0-1)
+            - max_monthly_budget: Optional maximum budget (scaled between 0-1)
+    
+    Returns:
+        DataFrame with top 5 recommended countries, containing columns:
+            - country: Country name
+            - country_score: Similarity score (higher is better, max 1.0)
+        The DataFrame is sorted by country_score in descending order.
     """
 
     feature_mapping = {

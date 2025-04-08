@@ -1,21 +1,76 @@
+"""
+Module for processing user inputs in the Ideal Country Selector application.
+
+This module handles the transformation of user input preferences into normalized values 
+that can be used by the recommendation algorithm. It includes functions for encoding 
+qualitative preferences (like "hot" or "cold" for climate) into numerical values, and 
+scaling those values to match the dataset's scale.
+
+Input data:
+    - User preferences for climate, cost of living, healthcare, safety, and internet speed
+    - User importance ratings for each preference
+    - Optional maximum monthly budget
+    
+Output data:
+    - Normalized preference values (scaled between 0-1)
+    - Normalized importance weights (scaled between 0-1)
+    - Normalized maximum monthly budget (if provided)
+"""
+
 import numpy as np
 from typing import Dict, Any
 import pickle
 import pandas as pd
 import os
+import pycountry
+import pycountry_convert as pc   # pycountry_convert for country-to-continent mapping
 
 # Get the absolute path to the project directory
 project_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+def get_country_continent_mapping():
+    """
+    Create a dictionary mapping country names (lowercase) to their respective continents.
+    Uses pycountry_convert to map ISO country codes to continent codes.
+    """
+    country_to_continent = {}
+    for country in pycountry.countries:
+        try:
+            country_alpha2 = country.alpha_2  # Get the 2-letter country code
+            continent_code = pc.country_alpha2_to_continent_code(country_alpha2)  # Get the continent code
+            country_to_continent[country.name.lower()] = continent_code  # Store mapping in lowercase
+        except KeyError:
+            continue  # Skip if no continent found
+    return country_to_continent
+
+# Load country-to-continent mapping once
+country_to_continent = get_country_continent_mapping()
+
+
 def transform_user_inputs(user_input_dict: Dict[str, Any]) -> Dict[str, float]:
     """
-    Transform user input dictionary recieved from the frontend into normalized values suitable for model / simple algorithm prediction.
-
+    Transform user input dictionary received from the frontend into normalized values suitable for model prediction.
+    
+    This function processes the raw user input from the frontend form, converting categorical 
+    preferences into numerical values and scaling them to match the dataset's scale using a 
+    pre-fitted scaling pipeline. It also scales importance ratings and handles the maximum 
+    monthly budget if provided.
+    
     Args:
-        user_input_dict: Dictionary with user preferences and importance ratings
+        user_input_dict: Dictionary with user preferences and importance ratings. May include:
+            - climate_preference: String ("hot", "mild", "cold")
+            - cost_of_living_preference: String ("low", "moderate", "high")
+            - healthcare_preference: String ("excellent", "good", "fair")
+            - safety_preference: String ("very_safe", "safe", "moderate")
+            - internet_speed_preference: String ("fast", "moderate", "slow")
+            - *_importance: Float (0-10) for each preference's importance
+            - max_monthly_budget: Optional float representing maximum budget in USD
 
     Returns:
-        Dictionary with normalized preference values and importance weights
+        Dictionary with normalized preference values and importance weights:
+            - Each preference value is scaled between 0-1
+            - Each importance value is scaled between 0-1
+            - max_monthly_budget is scaled if provided
     """
     normalized_inputs = {}
 
@@ -80,21 +135,38 @@ def transform_user_inputs(user_input_dict: Dict[str, Any]) -> Dict[str, float]:
 
         # Transform using the column transformer. [0][0] because the transform returns a numpy array
         normalized_inputs["max_monthly_budget"] = column_transformer.transform(simulated_df)[0][0]
-        
-    return normalized_inputs
 
+    # Filter by continent (if selected by user)
+    if "continent_preference" in user_input_dict:
+        selected_continent = user_input_dict["continent_preference"]  # e.g., "EU"
+        filtered_countries = [country for country, continent in country_to_continent.items() if continent == selected_continent]
+        normalized_inputs["filtered_countries"] = [c.lower() for c in filtered_countries]  # Store in lowercase for dataset matching
+
+    return normalized_inputs
 
 
 def encode_preference(preference: any, preference_type: str) -> float:
     """
-    Maps a user preference to a normalized value based on its type.
-
+    Maps a qualitative user preference to a numerical value based on its type.
+    
+    This function converts categorical user preferences (e.g., "hot", "moderate", "excellent") 
+    into numerical values that can be processed by the algorithm. Each preference type has 
+    its own mapping scale based on the real-world metrics in the dataset.
+    
     Args:
-        preference: The qualitative user preference e.g. "hot"
-        preference_type: The type of preference the "preference" arg refers to (e.g., "climate", "cost_of_living", etc.)
+        preference: The qualitative user preference (e.g., "hot", "low", "excellent")
+        preference_type: The type of preference to encode, one of:
+            - "climate_preference" - values map to average yearly temperature in °C
+            - "cost_of_living_preference" - values map to average monthly cost in USD
+            - "healthcare_preference" - values map to healthcare index (0-100)
+            - "safety_preference" - values map to safety index (0-100)
+            - "internet_speed_preference" - values map to internet speed in Mbps
 
     Returns:
-        An arbitrary float value to encode the qualitative preference into a number.
+        A float value representing the encoded preference, suitable for further scaling
+        
+    Raises:
+        ValueError: If an invalid preference or preference_type is provided
     """
     if preference_type == "climate_preference":
         if preference == "hot":

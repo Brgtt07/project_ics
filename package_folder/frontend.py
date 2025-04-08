@@ -1,3 +1,19 @@
+"""
+Streamlit frontend for the Ideal Country Selector application.
+
+This module implements the user interface for the Ideal Country Selector application
+using Streamlit. It provides input forms for users to specify their preferences and
+importance ratings for various factors (climate, cost of living, healthcare, safety,
+and internet speed). The user inputs are sent to the backend API, which returns 
+recommended countries based on the user's preferences.
+
+The frontend displays:
+    - Input sliders and selectors for user preferences
+    - Importance rating sliders for each factor
+    - Optional maximum monthly budget input
+    - Results section showing the top matching countries with scores
+"""
+
 import streamlit as st
 import requests
 
@@ -7,6 +23,21 @@ API_URL = 'https://project-ics-210911899890.europe-west1.run.app/recommend-count
 api_local = 'http://localhost:8000/recommend-countries'
 
 st.title("🌍 Find Your Ideal Country to Live!")
+st.write("")
+
+# Continent selection
+st.subheader("🗺️📍 Continent Preference")
+continent_options = {
+    "Surprise Me": None,
+    "Africa": "AF",
+    "Asia": "AS",
+    "Europe": "EU",
+    "North America": "NA",
+    "Oceania": "OC",
+    "South America": "SA"
+}
+continent_preference = st.selectbox("Select Continent", options=list(continent_options.keys()))
+selected_continent = continent_options[continent_preference]
 st.write("")
 
 # Climate/Temperature
@@ -61,8 +92,10 @@ if st.button("🎯 Find My Ideal Country"):
         'cost_of_living_importance': cost_of_living_importance,
         'healthcare_importance': healthcare_importance,
         'safety_importance': safety_importance,
-        'internet_speed_importance': internet_speed_importance
+        'internet_speed_importance': internet_speed_importance,
+        'continent_preference': selected_continent
     }
+
     if max_monthly_budget is not None:
         data['max_monthly_budget'] = max_monthly_budget
 
@@ -75,7 +108,7 @@ if st.button("🎯 Find My Ideal Country"):
         if isinstance(results, list):
             for i, country in enumerate(results, 1):
                 # Display country name and score in a single line
-                st.write(f"**#{i} 🏆 {country['country']}** - Match Score: {country['country_score'] * 100:.1f}")
+                st.write(f"**#{i} 🏆 {country['country'].title()}** - Match Score: {country['country_score'] * 100:.1f}%")
         else:
             st.write("API response error:", results)
     else:
