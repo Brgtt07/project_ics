@@ -7,6 +7,14 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import MinMaxScaler
 
+# Define the base directory (you can adjust this as needed)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Define paths using os.path.join
+DATA_PATH = os.path.join(BASE_DIR, "../raw_data/merged_country_level/merged_dataset_with_knn.csv")
+PIPELINE_PATH = os.path.join(BASE_DIR, "../models/v2_scaler_pipeline.pkl")
+N_NEIGHBORS = 155
+
 def scale_data_and_get_pipeline(df, save_path=None):
     """
     Takes the dataframe, Scales numeric features using MinMaxScaler and returns the scaled df, 
@@ -85,11 +93,7 @@ def find_similar_countries(
 # --- Main Execution ---
 if __name__ == "__main__":
     # --- Configuration ---
-    DATA_PATH = "../raw_data/merged_country_level/merged_dataset_with_knn.csv"
-    PIPELINE_PATH = "../models/v2_scaler_pipeline.pkl" 
-    N_NEIGHBORS = 155
-    
-    # Example Ideal Country Values (keys must match numeric features found later)
+    #     # Example Ideal Country Values (keys must match numeric features found later)
     ideal_country_values = {
         'average_monthly_cost_$': 720.0, 
         'average_yearly_temperature': 13.0,
