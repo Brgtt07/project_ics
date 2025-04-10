@@ -34,14 +34,14 @@ sample_user_inputs = {
     "climate_preference": "mild" ,      # Moderate climate preference
 
     # Importances (typically slider values, e.g., 1-5 or 0-1)
-    "cost_of_living_importance": 0.8,
-    "safety_index_importance": 0.9,
-    "internet_speed_mbps_importance": 0.6,
-    "healthcare_index_importance": 0.7,
-    "climate_importance": 0.5,
+    "cost_of_living_importance": 8,
+    "safety_importance": 8,
+    "internet_speed_importance": 8,
+    "healthcare_importance": 8,
+    "climate_importance": 8,
 
     # Optional budget and continent
-    "max_monthly_budget": 1500, # Example budget in USD
+    "max_monthly_budget": 4000, # Example budget in USD
     "continent_preference": "EU" # Example: Filter for Europe
 }
 
@@ -80,7 +80,7 @@ print("\n" + "="*30 + "\n")
 
 # --- 4. Find Similar Countries --- 
 continent_code = sample_user_inputs.get("continent_preference")
-n_neighbors = 5 # Number of recommendations desired
+n_neighbors = 20 # Number of recommendations desired
 
 print(f"--- Finding Top {n_neighbors} Similar Countries ---")
 print(f"Continent Filter: {continent_code}")
@@ -91,13 +91,15 @@ pd.set_option('display.width', 1000)
 
 try:
     # Run the similarity function
-    result_df = find_similar_countries(
+    result_df,weighted_squared_deltas = find_similar_countries(
         scaled_preferences=scaled_preferences,
         scaled_weights=scaled_weights,
         scaled_budget=scaled_budget,
         continent_code=continent_code,
         n_neighbors=n_neighbors
     )
+    print("\n--- Results weighted_squared_deltas ---")
+    print(weighted_squared_deltas)
     
     print("\n--- Results DataFrame ---")
     if not result_df.empty:
