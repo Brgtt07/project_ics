@@ -123,7 +123,44 @@ def find_similar_countries(
     weights_array = np.array([scaled_weights[feature] for feature in numeric_features])
     feature_data = filtered_data_scaled[numeric_features].values
 
-    distances = np.sqrt(np.sum(weights_array * (feature_data - ideal_vector)**2, axis=1))
+    #previous way of calculating distances: distances = np.sqrt(np.sum(weights_array * (feature_data - ideal_vector)**2, axis=1))
+    
+    # Calculate difference between country data and ideal vector, the result is a 155 rows by 5 columns matrix
+    deltas = ideal_vector - feature_data
+
+    zero_delta_if_negative_delta_features = [
+        'internet_speed_mbps',   # Higher speed is better
+        'safety_index',          # Higher safety is better
+        'Healthcare Index'       # Higher index is better
+    ]
+    zero_delta_if_positive_delta_features = [
+        'average_monthly_cost_$', # Higher cost is  worse
+    ]
+
+    # Apply relu to the deltas, but only for the features that are in the zero_dist_if_negative_delta_features list
+    for feature in zero_delta_if_negative_delta_features:
+        if feature in numeric_features:
+            deltas[:, numeric_features.index(feature)] = np.maximum(0, deltas[:, numeric_features.index(feature)])
+        else:
+            print(f"Warning: {feature} not found in numeric_features.")
+    
+    # Apply relu to the deltas, but only for the features that are in the zero_dist_if_positive_delta_features list
+    for feature in zero_delta_if_positive_delta_features:
+        if feature in numeric_features:
+            deltas[:, numeric_features.index(feature)] = np.maximum(0, deltas[:, numeric_features.index(feature)])
+        else:
+            print(f"Warning: {feature} not found in numeric_features.")
+
+    squared_deltas = deltas**2
+
+    # Apply weights to the deltas
+    weighted_squared_deltas = squared_deltas * weights_array
+
+    # Calculate the sum of the weighted deltas
+    weighted_sum_of_squared_deltas = np.sum(weighted_squared_deltas, axis=1)
+
+    distances = np.sqrt(weighted_sum_of_squared_deltas) #the result is euclidean distance, but with a ReLu and weights applied to the features
+
     
     # Handle cases with zero distance (perfect match) or single result
     max_distance = np.max(distances) if len(distances) > 0 else 1.0
@@ -150,56 +187,93 @@ def _add_details_to_results(result_df: pd.DataFrame, data_original: pd.DataFrame
                            numeric_features: list) -> pd.DataFrame:
     """Helper to add original values, deltas, and match scores to the result DataFrame."""
     
-    top_countries = result_df['country'].tolist()
-    # Ensure case-insensitive matching when retrieving original data
-    original_matched_data = data_original[
-        data_original['country'].str.lower().isin([c.lower() for c in top_countries])
-    ].set_index('country') # Index by country for potential lookup
-
-    # Reindex to match the order and handle potential missing countries
-    # Use the exact country names from result_df for reindexing
-    original_matched_data = original_matched_data.reindex(top_countries)
-    original_matched_data.reset_index(inplace=True) # Put country back as column
-
+    # Create a copy of the result_df to avoid modifying the original during iteration
+    result_with_details = result_df.copy()
+    
+    # Get unscaled preferences
     unscaled_preferences = {
         feature: get_unscaled_value(scaled_preferences[feature], feature, pipeline)
         for feature in numeric_features
     }
     
-    for feature in numeric_features:
-        if feature in original_matched_data.columns:
-            original_values = original_matched_data[feature].values
-            ideal_value = unscaled_preferences[feature]
+    # Print debug info
+    print(f"\nProcessing {len(result_with_details)} countries for detailed results")
+    
+    # Process each country in the results
+    for idx, row in result_with_details.iterrows():
+        country_name = row['country']
+        # Find matching entries in original data (case-insensitive)
+        country_matches = data_original[data_original['country'].str.lower() == country_name.lower()]
+        
+        if len(country_matches) == 0:
+            print(f"Warning: Country '{country_name}' not found in original data")
+            continue
             
-            # Ensure data types are numeric for calculations
-            original_values_numeric = pd.to_numeric(original_values, errors='coerce')
-            delta = original_values_numeric - ideal_value
-            
-            result_df[f"{feature}_original"] = original_values # Keep original potentially non-numeric
-            result_df[f"{feature}_delta"] = delta
-
-            # Calculate feature match score (0-1, higher is better)
-            # Normalize based on the range of the *original* data for this feature
-            feature_range = data_original[feature].max() - data_original[feature].min()
-            feature_range = feature_range if pd.notna(feature_range) and feature_range > 1e-9 else 1.0
-            
-            abs_delta = np.abs(delta)
-            # Use np.clip after division to ensure 0-1 range, handle NaN deltas
-            match_score = 1 - np.clip(abs_delta / feature_range, 0, 1)
-            result_df[f"{feature}_match_score"] = np.nan_to_num(match_score, nan=0.0) # Replace NaN score with 0
+        if len(country_matches) > 1:
+            print(f"Warning: Found {len(country_matches)} entries for country '{country_name}'. Using the first entry.")
+            country_data = country_matches.iloc[0]
         else:
-            # Handle case where feature is missing in original data
-            result_df[f"{feature}_original"] = np.nan
-            result_df[f"{feature}_delta"] = np.nan
-            result_df[f"{feature}_match_score"] = 0.0 # Assign 0 score if data is missing
-            
-    # Select and order columns
-    final_columns = ['country', 'similarity_score'] + \
-                    [col for f in numeric_features for col in 
-                     [f"{f}_original", f"{f}_delta", f"{f}_match_score"]]
-    # Filter out any columns that might not exist if errors occurred
-    final_columns = [col for col in final_columns if col in result_df.columns]
-    return result_df[final_columns]
+            country_data = country_matches.iloc[0]
+        
+        # Process each feature
+        for feature in numeric_features:
+            if feature in country_data.index:
+                # Get original value
+                original_value = country_data[feature]
+                
+                # Convert to numeric for calculations
+                try:
+                    original_value_numeric = float(original_value)
+                    
+                    # Calculate delta from ideal
+                    ideal_value = unscaled_preferences[feature]
+                    delta = original_value_numeric - ideal_value
+                    
+                    # Store values in result DataFrame
+                    result_with_details.at[idx, f"{feature}_original"] = original_value
+                    result_with_details.at[idx, f"{feature}_delta"] = delta
+                    
+                    # Calculate match score (0-1, higher is better)
+                    # Get weight for this feature
+                    feature_weight = scaled_preferences.get(feature, 1.0)
+                    
+                    # Calculate weighted squared delta
+                    weighted_squared_delta = (delta ** 2) * feature_weight
+                    
+                    # Get max possible weighted delta across all countries for normalization
+                    all_values = pd.to_numeric(data_original[feature], errors='coerce')
+                    max_delta = np.nanmax(np.abs(all_values - ideal_value))
+                    max_weighted_delta = (max_delta ** 2) * feature_weight
+                    
+                    # Calculate match score, avoiding division by zero
+                    if max_weighted_delta < 1e-9:
+                        match_score = 1.0  # Perfect match if max delta is effectively zero
+                    else:
+                        match_score = 1 - (weighted_squared_delta / max_weighted_delta)
+                        
+                    # Store match score
+                    result_with_details.at[idx, f"{feature}_match_score"] = np.nan_to_num(match_score, nan=0.0)
+                    
+                except (ValueError, TypeError):
+                    # Handle non-numeric values
+                    print(f"Warning: Non-numeric value '{original_value}' for feature '{feature}' in country '{country_name}'")
+                    result_with_details.at[idx, f"{feature}_original"] = original_value
+                    result_with_details.at[idx, f"{feature}_delta"] = np.nan
+                    result_with_details.at[idx, f"{feature}_match_score"] = 0.0
+            else:
+                # Feature not found for this country
+                result_with_details.at[idx, f"{feature}_original"] = np.nan
+                result_with_details.at[idx, f"{feature}_delta"] = np.nan
+                result_with_details.at[idx, f"{feature}_match_score"] = 0.0
+    
+    # Select columns
+    final_columns = ['country', 'similarity_score'] + [
+        col for f in numeric_features for col in 
+        [f"{f}_original", f"{f}_delta", f"{f}_match_score"]
+    ]
+    
+    # Return only columns that exist
+    return result_with_details[[col for col in final_columns if col in result_with_details.columns]]
 
 def _create_empty_result_df(numeric_features: list) -> pd.DataFrame:
     """Helper function to create an empty DataFrame with the expected columns."""
