@@ -9,7 +9,7 @@ import pycountry_convert as pc
 # --- Constants ---
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DATA_PATH_SCALED = os.path.join(PROJECT_DIR, "raw_data", "merged_country_level", "scaled_merged_data_after_imputation.csv")
-DATA_PATH_ORIGINAL = os.path.join(PROJECT_DIR, "raw_data", "merged_country_level", "merged_dataset_with_knn.csv")
+DATA_PATH_ORIGINAL = os.path.join(PROJECT_DIR, "raw_data", "merged_country_level", "final_merged_dataset_with_knn.csv")
 PIPELINE_PATH = os.path.join(PROJECT_DIR, 'models', 'scaling_pipeline.pkl')
 
 # --- Cached Data ---
@@ -69,4 +69,4 @@ def load_data() -> Tuple[pd.DataFrame, pd.DataFrame]:
         except Exception as e:
             print(f"Error loading data: {e}")
             raise
-    return _data_cache 
+    return _data_cache
