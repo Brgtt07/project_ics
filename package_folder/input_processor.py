@@ -36,24 +36,24 @@ def transform_user_inputs(user_input_dict: Dict[str, Any], pipeline: Any) -> Tup
 
     # 1. Map preferences to numerical values
     # Climate preference mapping
-    climate_mapping = {"hot": 25.0, "mild": 18.0, "cold": 11.0}
-    climate_default = 18.0  # mild
-    
+    climate_mapping = {"hot": 27.0, "mild": 19.0, "cold": 11.0}
+    climate_default = 19.0  # mild
+
     # Get climate preference and normalize it
     climate_pref = str(user_input_dict.get("climate_preference", "mild")).lower().strip()
-    
+
     # Validate climate preference
     if climate_pref not in climate_mapping:
         print(f"Warning: Invalid climate preference '{climate_pref}'. Using default (mild).")
         climate_value = climate_default
     else:
         climate_value = climate_mapping[climate_pref]
-    
+
     # Create dictionary of numerical preference values
     numerical_prefs = {
         # Use default values for preferences that don't have a slider in the frontend
         "average_monthly_cost_$": 800.0,
-        "average_yearly_temperature": climate_value,  
+        "average_yearly_temperature": climate_value,
         "internet_speed_mbps": 100.0,
         "safety_index": 65.0,
         "Healthcare Index": 65.0
@@ -89,11 +89,11 @@ def transform_user_inputs(user_input_dict: Dict[str, Any], pipeline: Any) -> Tup
             if budget > 0:
                 # Create DataFrame with budget and dummy values for scaling
                 # Ensure columns match the order expected by the transformer
-                budget_df = pd.DataFrame([{ 
-                    feat: budget if feat == 'average_monthly_cost_$' else 0 
+                budget_df = pd.DataFrame([{
+                    feat: budget if feat == 'average_monthly_cost_$' else 0
                     for feat in pipeline_features
                 }], columns=pipeline_features)
-                
+
                 # Use the specific column transformer for consistency
                 column_transformer = pipeline.named_steps['column_transformer']
                 scaled_budget = column_transformer.transform(budget_df)[0][0] # Budget is the first column
@@ -101,4 +101,4 @@ def transform_user_inputs(user_input_dict: Dict[str, Any], pipeline: Any) -> Tup
             print(f"Warning: Invalid budget value received: {budget_input}. Ignoring budget.")
             scaled_budget = None
 
-    return scaled_preferences, scaled_weights, scaled_budget 
+    return scaled_preferences, scaled_weights, scaled_budget
