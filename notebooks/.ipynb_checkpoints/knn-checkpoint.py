@@ -11,41 +11,41 @@ from sklearn.preprocessing import MinMaxScaler
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Define paths using os.path.join
-DATA_PATH = os.path.join(BASE_DIR, "../raw_data/merged_country_level/final_merged_dataset_with_knn.csv")
+DATA_PATH = os.path.join(BASE_DIR, "../raw_data/merged_country_level/merged_dataset_with_knn.csv")
 PIPELINE_PATH = os.path.join(BASE_DIR, "../models/v2_scaler_pipeline.pkl")
-N_NEIGHBORS = 152
+N_NEIGHBORS = 155
 
 def scale_data_and_get_pipeline(df, save_path=None):
     """
-    Takes the dataframe, Scales numeric features using MinMaxScaler and returns the scaled df,
+    Takes the dataframe, Scales numeric features using MinMaxScaler and returns the scaled df, 
     the pipeline, and the list of numeric feature names. Optionally saves the pipeline.
     """
     numeric_features = df.select_dtypes(include=np.number).columns.tolist()
-
+    
     # Pipeline to scale only numeric features
     preprocessor = ColumnTransformer(
         transformers=[('num', MinMaxScaler(), numeric_features)],
         remainder='drop'  # Only keep scaled numeric columns from this pipeline
     )
-
+    
     pipeline = Pipeline(steps=[('preprocessor', preprocessor)])
-
+    
     # Fit the pipeline and transform the data
     scaled_numeric_data = pipeline.fit_transform(df)
-
+    
     # Create DataFrame for the scaled numeric data
     df_numeric_scaled = pd.DataFrame(
         scaled_numeric_data,
         columns=numeric_features,
         index=df.index
     )
-
+    
     # Save the pipeline if path is provided
     if save_path:
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         with open(save_path, 'wb') as f:
             pickle.dump(pipeline, f)
-
+            
     return df_numeric_scaled, pipeline, numeric_features
 
 def find_similar_countries(
@@ -54,7 +54,7 @@ def find_similar_countries(
     original_df,          # Original DataFrame to retrieve non-numeric info
     numeric_features,     # List of numeric feature names (order matters)
     pipeline,             # Fitted pipeline used for scaling
-    n_neighbors=10,
+    n_neighbors=10, 
     feature_weights=None  # List or array of weights
 ):
     """
@@ -83,10 +83,10 @@ def find_similar_countries(
 
     # Get indices of nearest neighbors
     nearest_indices = np.argsort(distances)[:n_neighbors]
-
+    
     # Get the neighbor data from the *original* dataframe and add the distance
     close_countries = original_df.iloc[nearest_indices].copy()
-    close_countries['distance'] = distances[nearest_indices]
+    close_countries['distance'] = distances[nearest_indices] 
 
     return close_countries
 
@@ -95,10 +95,10 @@ if __name__ == "__main__":
     # --- Configuration ---
     #     # Example Ideal Country Values (keys must match numeric features found later)
     ideal_country_values = {
-        'average_monthly_cost_$': 720.0,
+        'average_monthly_cost_$': 720.0, 
         'average_yearly_temperature': 13.0,
-        'internet_speed_mbps': 116.6,
-        'safety_index': 50.6,
+        'internet_speed_mbps': 116.6, 
+        'safety_index': 50.6, 
         'Healthcare Index': 75.7
     }
 
@@ -120,10 +120,10 @@ if __name__ == "__main__":
         print(f"Loading existing scaling pipeline from {PIPELINE_PATH}")
         with open(PIPELINE_PATH, 'rb') as f:
             pipeline = pickle.load(f)
-
+        
         # Infer numeric features from the loaded pipeline
         try:
-            numeric_features = pipeline.steps[0][1].transformers_[0][2]
+            numeric_features = pipeline.steps[0][1].transformers_[0][2] 
             print(f"Inferred numeric features from pipeline: {numeric_features}")
             # Apply the loaded pipeline to get scaled numeric data
             scaled_numeric = pipeline.transform(df_original) # Assumes pipeline has numeric features stored
@@ -134,10 +134,10 @@ if __name__ == "__main__":
 
     if pipeline is None: # If loading failed or file didn't exist
         print(f"Creating new scaling pipeline and saving to {PIPELINE_PATH}...")
-        df_numeric_scaled, pipeline, numeric_features = scale_data_and_get_pipeline(df_original, save_path=PIPELINE_PATH)
+        df_numeric_scaled, pipeline, numeric_features = scale_data_and_get_pipeline(df_original, save_path=PIPELINE_PATH) 
         print(f"Using numeric features: {numeric_features}")
         print("Pipeline created and saved.")
-
+        
     # --- Input Validation ---
     # Ensure the provided ideal values and weights match the numeric features derived from data/pipeline
     if set(ideal_country_values.keys()) != set(numeric_features):
@@ -148,28 +148,28 @@ if __name__ == "__main__":
     # --- Find Neighbors ---
     print("\nFinding similar countries...")
     similar_countries = find_similar_countries(
-        ideal_country_values=ideal_country_values,
-        df_numeric_scaled=df_numeric_scaled,
-        original_df=df_original,
+        ideal_country_values=ideal_country_values, 
+        df_numeric_scaled=df_numeric_scaled, 
+        original_df=df_original, 
         numeric_features=numeric_features,
         pipeline=pipeline,
         n_neighbors=N_NEIGHBORS,
-        feature_weights=weights_input
+        feature_weights=weights_input 
     )
 
     # --- Display Results ---
     print(f"\nTop {N_NEIGHBORS} similar countries (based on weighted distance):")
-
+    
     # Identify country name column (handle 'Unnamed: 0' or other variations)
     country_col_name = 'Country' # Default guess
     if 'Unnamed: 0' in df_original.columns and 'Country' not in df_original.columns:
-         country_col_name = 'Unnamed: 0'
+         country_col_name = 'Unnamed: 0' 
     elif 'Country' not in df_original.columns:
          country_col_name = df_original.columns[0] # Fallback to first column
-
+    
     # Select columns to display
     display_cols = [country_col_name, 'distance'] + numeric_features
-
+    
     # Ensure display_cols exist in the result DataFrame
     display_cols = [col for col in display_cols if col in similar_countries.columns]
 
