@@ -52,11 +52,11 @@ def transform_user_inputs(user_input_dict: Dict[str, Any], pipeline: Any) -> Tup
     # Create dictionary of numerical preference values
     numerical_prefs = {
         # Use default values for preferences that don't have a slider in the frontend
-        "average_monthly_cost_$": 800.0,
+        "average_monthly_cost_$": 100.0, #quite low percentile but temporary fix because the MinMaxScaler is not working well with the feature
         "average_yearly_temperature": climate_value,
-        "internet_speed_mbps": 100.0,
-        "safety_index": 65.0,
-        "Healthcare Index": 65.0
+        "internet_speed_mbps": 147.0,
+        "safety_index": 66.0,
+        "Healthcare Index": 68.0
     }
 
     # 2. Scale numerical preferences using the pipeline

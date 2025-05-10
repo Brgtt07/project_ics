@@ -65,7 +65,7 @@ def recommend_countries_endpoint(user_inputs: Dict[str, Any]) -> List[Dict[str, 
         n_neighbors = 5 # Default number of country reccomendations
         
         # 4. Find similar countries using the similarity module
-        result_df = find_similar_countries(
+        result_df,weighted_squared_deltas = find_similar_countries(
             scaled_preferences=scaled_preferences,
             scaled_weights=scaled_weights,
             scaled_budget=scaled_budget,
